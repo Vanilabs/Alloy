@@ -1,0 +1,103 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: alloy-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    env_file:
+      - ./backend/.env.docker
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      cassandra:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
+    profiles: ["backend"]
+    networks:
+      - alloy_intranet
+
+  redis:
+    image: redis:7-alpine
+    container_name: alloy-redis-srv
+    restart: unless-stopped
+    profiles: ["backend"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - alloy_intranet
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: alloy-postgres-db
+    restart: unless-stopped
+    profiles: ["backend"]
+    env_file:
+      - ./backend/.env.docker
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB -h localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - alloy_intranet
+
+  cassandra:
+    image: cassandra:4.1
+    container_name: alloy-cassandra-db
+    restart: unless-stopped
+    profiles: ["backend"]
+    ports:
+      - "9042:9042"
+    environment:
+      CASSANDRA_CLUSTER_NAME: "cass_cluster"
+    volumes:
+      - cassandra_data:/var/lib/cassandra
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh -e 'describe keyspaces'"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+    networks:
+      - alloy_intranet
+
+  migrations:
+    image: kukymbr/goose-docker:latest
+    container_name: alloy-db-migrations
+    profiles: ["backend"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./backend/internal/shared/database/migrations:/migrations
+    env_file:
+      - ./backend/.env.docker
+    command: up
+    networks:
+      - alloy_intranet
+
+
+volumes:
+  redis_data:
+  postgres_data:
+  cassandra_data:
+
+networks:
+  alloy_intranet:
+    driver: bridge
