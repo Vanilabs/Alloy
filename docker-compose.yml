@@ -1,5 +1,5 @@
 services:
-  alloy:
+  alloy-api:
     build:
       context: ./backend
       dockerfile: Dockerfile
