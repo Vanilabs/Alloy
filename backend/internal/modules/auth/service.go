@@ -19,6 +19,7 @@ type Service interface {
 	VerifyInvitation(ctx context.Context, token string, email string) error
 	AcceptInvitation(ctx context.Context, token string, email string) error
 	RequestMagicLink(ctx context.Context, email string) error
+	VerifyMagicLink(ctx context.Context, token string, sessionInfo *models.UserSessionInfo) (*models.LoginResponse, error)
 }
 
 type authService struct {
@@ -26,10 +27,17 @@ type authService struct {
 	logger         *zap.Logger
 	notification   *notifications.Notification
 	userRepository users.Repository
+	jwtManager     *utils.JWTManager
 }
 
-func NewService(repository Repository, logger *zap.Logger, notification *notifications.Notification, userRepository users.Repository) Service {
-	return &authService{repository: repository, logger: logger, notification: notification, userRepository: userRepository}
+func NewService(repository Repository, logger *zap.Logger, notification *notifications.Notification, userRepository users.Repository, jwtManager *utils.JWTManager) Service {
+	return &authService{
+		repository:     repository,
+		logger:         logger,
+		notification:   notification,
+		userRepository: userRepository,
+		jwtManager:     jwtManager,
+	}
 }
 
 func (s *authService) InviteUser(ctx context.Context, email string, role string, adminId string) error {
@@ -165,4 +173,78 @@ func (s *authService) RequestMagicLink(ctx context.Context, email string) error 
 		zap.Duration("ttl", models.MagicLinkTokenExpiry))
 
 	return nil
+}
+
+func (s *authService) VerifyMagicLink(ctx context.Context, token string, sessionInfo *models.UserSessionInfo) (*models.LoginResponse, error) {
+	magicLinkData, err := s.repository.Cache_GetMagicLinkToken(ctx, token)
+	if err != nil {
+		s.logger.Error("invalid or expired magic link token", zap.Error(err))
+		return nil, err
+	}
+
+	if time.Now().After(magicLinkData.ExpiresAt) {
+		s.logger.Error("magic link token expired", zap.String("token", token))
+		err = s.repository.Cache_DeleteMagicLinkToken(ctx, token)
+		if err != nil {
+			s.logger.Error("failed to delete expired magic link token", zap.Error(err))
+		}
+		return nil, ErrMagicLinkTokenExpired
+	}
+
+	user, err := s.userRepository.GetUserByID(ctx, uuid.MustParse(magicLinkData.UserID))
+	if err != nil {
+		s.logger.Error("user not found", zap.String("user_id", magicLinkData.UserID))
+		return nil, err
+	}
+
+	// delete used magic link token
+	err = s.repository.Cache_DeleteMagicLinkToken(ctx, token)
+	if err != nil {
+		s.logger.Error("failed to delete used magic link token", zap.Error(err))
+	}
+
+	sessionInfo.UserID = user.ID.String()
+	sessionInfo.LoginTime = time.Now()
+	sessionInfo.LastSeen = time.Now()
+	sessionInfo.IsActive = true
+	if sessionInfo.TokenID == "" {
+		sessionInfo.TokenID = uuid.New().String()
+	}
+
+	jwtData := &models.JWTData{
+		UserID:  user.ID.String(),
+		Email:   user.Email,
+		TokenID: sessionInfo.TokenID,
+		Role:    user.Role,
+	}
+
+	accessToken, err := s.jwtManager.GenerateJWT(jwtData)
+	if err != nil {
+		s.logger.Error("failed to generate access token", zap.Error(err))
+		return nil, err
+	}
+
+	refreshToken, err := s.jwtManager.GenerateRefreshToken(user.ID.String(), sessionInfo.TokenID)
+	if err != nil {
+		s.logger.Error("failed to generate refresh token", zap.Error(err))
+		return nil, err
+	}
+
+	return &models.LoginResponse{
+		Auth: models.JwtAuthData{
+			AccessToken:  accessToken,
+			RefreshToken: refreshToken,
+			ExpiresIn:    int(utils.SessionExpiry.Seconds()),
+			TokenType:    "Bearer",
+		},
+		User: models.User{
+			ID:             user.ID,
+			Email:          user.Email,
+			Role:           user.Role,
+			FirstName:      user.FirstName,
+			LastName:       user.LastName,
+			RoleAtOrg:      user.RoleAtOrg,
+			EmployeeNumber: user.EmployeeNumber,
+		},
+	}, nil
 }

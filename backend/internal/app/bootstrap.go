@@ -8,6 +8,7 @@ import (
 	"alloy/internal/shared/constants"
 	"alloy/internal/shared/notifications"
 	"alloy/internal/shared/router"
+	"alloy/internal/shared/utils"
 
 	"alloy/internal/shared/socket"
 
@@ -21,7 +22,7 @@ type Modules struct {
 	Auth      *auth.Module
 }
 
-func InitModules(env *router.Environment) (*Modules, error) {
+func InitModules(env *router.Environment, jwtManager *utils.JWTManager) (*Modules, error) {
 	env.Logger.Info("Initializing modules...")
 
 	socketTracker := socket.NewSocketTracker(env.Stores.Redis)
@@ -34,7 +35,7 @@ func InitModules(env *router.Environment) (*Modules, error) {
 
 	usersModule := users.NewModule(env.Stores, env.Logger, notification)
 	messagingModule := messaging.NewModule(socketManager, env)
-	authModule := auth.NewModule(env.Stores, env.Logger, notification, usersModule.Repository)
+	authModule := auth.NewModule(env.Stores, env.Logger, notification, usersModule.Repository, jwtManager)
 
 	return &Modules{
 		Users:     usersModule,

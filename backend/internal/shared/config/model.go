@@ -16,16 +16,17 @@ type Config struct {
 	ORIGINS               string `mapstructure:"ORIGINS"`
 	JwtSecret             string `mapstructure:"JWT_SECRET"`
 	VerboseRequestLogging bool   `mapstructure:"VERBOSE_REQUEST_LOGGING"`
-	CassandraHost    		string  `mapstructure:"CASSANDRA_HOST"`
-	CassandraKeyspace 			string  `mapstructure:"CASSANDRA_KEYSPACE"`
-	CassandraPassword 			string  `mapstructure:"CASSANDRA_PASSWORD"`
-	CassandraUsername			string  `mapstructure:"CASSANDRA_USERNAME"`
-	CassandraPort    string  `mapstructure:"CASSANDRA_PORT"`
+	CassandraHost         string `mapstructure:"CASSANDRA_HOST"`
+	CassandraKeyspace     string `mapstructure:"CASSANDRA_KEYSPACE"`
+	CassandraPassword     string `mapstructure:"CASSANDRA_PASSWORD"`
+	CassandraUsername     string `mapstructure:"CASSANDRA_USERNAME"`
+	CassandraPort         string `mapstructure:"CASSANDRA_PORT"`
 	MailjetPublicKey      string `mapstructure:"MAILJET_PUBLIC_KEY"`
 	MailjetPrivateKey     string `mapstructure:"MAILJET_PRIVATE_KEY"`
 	EmailFrom             string `mapstructure:"EMAIL_FROM"`
 	EmailFromName         string `mapstructure:"EMAIL_FROM_NAME"`
-	AstraDbId string `mapstructure:"ASTRA_DB_ID"`
-	AstraDbRegion string `mapstructure:"ASTRA_DB_REGION"`
-	AstraAppToken 			string `mapstructure:"ASTRA_APP_TOKEN"`
+	AstraDbId             string `mapstructure:"ASTRA_DB_ID"`
+	AstraDbRegion         string `mapstructure:"ASTRA_DB_REGION"`
+	AstraAppToken         string `mapstructure:"ASTRA_APP_TOKEN"`
+	RefreshTokenSecret    string `mapstructure:"REFRESH_TOKEN_SECRET"`
 }

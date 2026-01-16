@@ -7,4 +7,5 @@ var (
 	ErrInvitationAlreadyVerified = errors.New("invitation already verified")
 	ErrInvitationExpired         = errors.New("invitation expired")
 	ErrMagicLinkTokenGeneration  = errors.New("failed to generate magic link token")
+	ErrMagicLinkTokenExpired     = errors.New("magic link token expired")
 )
