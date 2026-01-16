@@ -32,7 +32,7 @@ RUN go mod download
 COPY . .
 COPY .air.toml ./
 
-EXPOSE 8080
+EXPOSE 8082
 
 CMD ["air", "-c", ".air.toml"]
 

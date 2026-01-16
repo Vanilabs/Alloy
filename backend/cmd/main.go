@@ -7,6 +7,7 @@ import (
 	"alloy/internal/shared/constants"
 	"alloy/internal/shared/database"
 	"alloy/internal/shared/router"
+	"alloy/internal/shared/utils"
 	"fmt"
 	"os"
 	"os/signal"
@@ -24,6 +25,11 @@ func main() {
 	defer zapLogger.Close()
 
 	zapLogger.Logger.Info("Welcome to Alloy Backend")
+
+	jwtManager := utils.NewJWTManager(
+		cfg.JwtSecret,
+		cfg.RefreshTokenSecret,
+	)
 
 	fiberApp := router.InitRouterWithConfig(cfg, zapLogger.Logger)
 
@@ -67,7 +73,7 @@ func main() {
 	env := router.NewEnvironment(cfg, fiberApp, zapLogger.Logger, stores, services)
 
 	// initialize all modules...
-	modules, err := app.InitModules(env)
+	modules, err := app.InitModules(env, jwtManager)
 	if err != nil {
 		zapLogger.Logger.Error("Failed to initialize modules", zap.Error(err))
 		os.Exit(1)

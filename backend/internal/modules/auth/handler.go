@@ -2,12 +2,16 @@ package auth
 
 import (
 	"alloy/internal/modules/users"
+	"alloy/internal/shared/database/models"
 	"alloy/internal/shared/router"
+	"alloy/internal/shared/validations/schemas"
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
@@ -27,6 +31,8 @@ func (h *Handler) Init(basePath string, env *router.Environment) error {
 
 	authGroup := env.Fiber.Group(basePath + "/auth")
 
+	authGroup.Post("/magic-link", h.requestMagicLink)
+	authGroup.Post("/magic-link/verify", h.verifyMagicLink)
 	authGroup.Post("/invite", h.inviteUser)
 	authGroup.Patch("/accept", h.acceptInvitation)
 	return nil
@@ -73,4 +79,46 @@ func (h *Handler) acceptInvitation(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "invitation verified successfully"})
+}
+
+func (h *Handler) requestMagicLink(c *fiber.Ctx) error {
+	ctx, cancel := context.WithTimeout(c.UserContext(), time.Minute)
+	defer cancel()
+
+	var req schemas.RequestMagicLinkSchema
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	err := h.service.RequestMagicLink(ctx, req.Email)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": fmt.Sprintf("failed to request magic link. err: %s", err.Error())})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "magic link sent successfully"})
+}
+
+func (h *Handler) verifyMagicLink(c *fiber.Ctx) error {
+	ctx, cancel := context.WithTimeout(c.UserContext(), time.Minute)
+	defer cancel()
+
+	var req schemas.MagicLinkVerifySchema
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	sessionInfo := models.UserSessionInfo{
+		UserAgent: c.Get("User-Agent"),
+		IPAddress: c.IP(),
+		TokenID:   uuid.New().String(),
+	}
+
+	loginResponse, err := h.service.VerifyMagicLink(ctx, req.Token, &sessionInfo)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": fmt.Sprintf("failed to verify magic link. err: %s", err.Error())})
+	}
+
+	h.logger.Info("user authenticated successfully", zap.String("user_id", loginResponse.User.ID.String()))
+
+	return c.Status(fiber.StatusOK).JSON(loginResponse)
 }
