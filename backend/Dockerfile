@@ -1,20 +1,53 @@
-# Build stage
-FROM golang:1.25.4-alpine AS build
+##############################
+# STAGE 1: Build stage (for production)
+##############################
+FROM golang:1.25.1-alpine AS build
+
+ENV CGO_ENABLED=0 \
+    GOOS=linux \
+    GOARCH=amd64
+
 WORKDIR /app
 
-# Copy modules and download dependencies
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Copy all source code
 COPY . .
 
-# Build the binary from the cmd directory
 RUN go build -o app ./cmd
 
-# Run stage
-FROM alpine:latest
+##############################
+# STAGE 2: Dev image with Air for hot reload
+##############################
+FROM golang:1.25.1-alpine AS dev
+
+# Install Air for hot reload
+RUN go install github.com/air-verse/air@latest
+
 WORKDIR /app
-COPY --from=build /app/app .
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+COPY .air.toml ./
+
 EXPOSE 8080
+
+CMD ["air", "-c", ".air.toml"]
+
+##############################
+# STAGE 3: Production image
+##############################
+FROM alpine:latest AS production
+
+RUN apk --no-cache add ca-certificates tzdata
+
+WORKDIR /app
+
+# Copy the binary from build stage
+COPY --from=build /app/app .
+
+EXPOSE 8080
+
 CMD ["./app"]
