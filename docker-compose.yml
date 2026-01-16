@@ -24,7 +24,7 @@ services:
         condition: service_healthy
       migrations:
         condition: service_completed_successfully
-    profiles: ['alloy']
+    profiles: ['alloy-api']
     networks:
       - alloy_intranet
 
@@ -32,7 +32,7 @@ services:
     image: redis:7-alpine
     container_name: alloy-redis-srv
     restart: unless-stopped
-    profiles: ['alloy']
+    profiles: ['alloy-api']
     ports:
       - '6379:6379'
     volumes:
@@ -49,7 +49,7 @@ services:
     image: postgres:16-alpine
     container_name: alloy-postgres-db
     restart: unless-stopped
-    profiles: ['alloy']
+    profiles: ['alloy-api']
     env_file:
       - ./backend/.env
     ports:
@@ -77,7 +77,7 @@ services:
     image: cassandra:4.1
     container_name: alloy-cassandra-db
     restart: unless-stopped
-    profiles: ['alloy']
+    profiles: ['alloy-api']
     ports:
       - '9042:9042'
     environment:
@@ -95,7 +95,7 @@ services:
   migrations:
     image: kukymbr/goose-docker:latest
     container_name: alloy-db-migrations
-    profiles: ['alloy']
+    profiles: ['alloy-api']
     depends_on:
       postgres:
         condition: service_healthy

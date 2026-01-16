@@ -157,7 +157,7 @@ Start all services including databases:
 # From project root
 make run-backend-stack-only
 # or
-docker compose --profile alloy up
+docker compose --profile alloy-api up
 ```
 
 This will start:
@@ -257,7 +257,7 @@ make start
 
 ```bash
 # From project root
-docker compose --profile alloy up --build
+docker compose --profile alloy-api up --build
 ```
 
 #### Option C: Direct Go Command

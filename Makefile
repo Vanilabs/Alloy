@@ -33,7 +33,7 @@ test-backend:
 	cd backend && go test ./tests/...
 
 run-backend-stack-only:
-	docker compose --profile alloy up --build
+	docker compose --profile alloy-api up --build
 
 run-all-stacks:
-	docker compose --profile alloy --profile frontend up --build
+	docker compose --profile alloy-api --profile frontend up --build
