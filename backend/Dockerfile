@@ -9,14 +9,11 @@ ENV CGO_ENABLED=0 \
 
 WORKDIR /app
 
-# Copy modules and download dependencies
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Copy all source code
 COPY . .
 
-# Build the binary
 RUN go build -o app ./cmd
 
 ##############################
@@ -29,18 +26,14 @@ RUN go install github.com/air-verse/air@latest
 
 WORKDIR /app
 
-# Copy go mod files and download dependencies
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Copy source code and Air config
 COPY . .
 COPY .air.toml ./
 
-# Expose the application port (actual port controlled by PORT env var)
 EXPOSE 8080
 
-# Run Air for hot reload
 CMD ["air", "-c", ".air.toml"]
 
 ##############################
@@ -55,8 +48,6 @@ WORKDIR /app
 # Copy the binary from build stage
 COPY --from=build /app/app .
 
-# Expose the application port
 EXPOSE 8080
 
-# Run the application
 CMD ["./app"]
