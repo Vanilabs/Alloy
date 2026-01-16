@@ -37,3 +37,6 @@ run-backend-stack-only:
 
 run-all-stacks:
 	docker compose --profile alloy-api --profile frontend up --build
+
+install:
+	cd ./backend &&go get $(package)

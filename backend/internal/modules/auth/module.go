@@ -2,10 +2,10 @@ package auth
 
 import (
 	"alloy/internal/modules/users"
+	"alloy/internal/shared/constants"
 	"alloy/internal/shared/notifications"
 
 	"go.uber.org/zap"
-	"gorm.io/gorm"
 )
 
 type Module struct {
@@ -14,8 +14,9 @@ type Module struct {
 	Handler    *Handler
 }
 
-func NewModule(db *gorm.DB, logger *zap.Logger, notification *notifications.Notification, userRepository users.Repository) *Module {
-	repository := NewRepository(db)
+func NewModule(store *constants.DataStores, logger *zap.Logger, notification *notifications.Notification, userRepository users.Repository) *Module {
+
+	repository := NewRepository(store)
 	service := NewService(repository, logger, notification, userRepository)
 	handler := NewHandler(service)
 
