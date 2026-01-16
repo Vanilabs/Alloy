@@ -4,6 +4,7 @@ export const mockUsers: Record<string, User> = {
     "current-user": {
         id: "current-user",
         name: "Lucas Miller",
+        email: "lucas.miller@example.com",
         avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop",
         status: "online",
         role: "admin",
@@ -11,6 +12,7 @@ export const mockUsers: Record<string, User> = {
     "user-1": {
         id: "user-1",
         name: "Ibim Victor",
+        email: "ibim.victor@example.com",
         avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop",
         status: "online",
         role: "member",
@@ -18,6 +20,7 @@ export const mockUsers: Record<string, User> = {
     "user-2": {
         id: "user-2",
         name: "Samuel Samuel",
+        email: "samuel.samuel@example.com",
         avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop",
         status: "online",
         role: "member",
@@ -25,6 +28,7 @@ export const mockUsers: Record<string, User> = {
     "user-3": {
         id: "user-3",
         name: "Joshua Joshua",
+        email: "joshua.joshua@example.com",
         avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop",
         status: "away",
         role: "member",
@@ -32,6 +36,7 @@ export const mockUsers: Record<string, User> = {
     "user-4": {
         id: "user-4",
         name: "Titus Kitamura",
+        email: "titus.kitamura@example.com",
         avatar: "https://images.unsplash.com/photo-1519345182560-3f2917c472ef?w=100&h=100&fit=crop",
         status: "offline",
         role: "viewer",
@@ -39,6 +44,7 @@ export const mockUsers: Record<string, User> = {
     "user-5": {
         id: "user-5",
         name: "Geoffrey Mott",
+        email: "geoffrey.mott@example.com",
         avatar: "https://images.unsplash.com/photo-1463453091185-61582044d556?w=100&h=100&fit=crop",
         status: "offline",
         role: "member",
@@ -46,6 +52,7 @@ export const mockUsers: Record<string, User> = {
     "user-6": {
         id: "user-6",
         name: "Alfonzo Schuessler",
+        email: "alfonzo.schuessler@example.com",
         avatar: "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=100&h=100&fit=crop",
         status: "online",
         role: "member",
@@ -53,6 +60,7 @@ export const mockUsers: Record<string, User> = {
     "user-7": {
         id: "user-7",
         name: "Brooke Davis",
+        email: "brooke.davis@example.com",
         avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop",
         status: "online",
         role: "member",
