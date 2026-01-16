@@ -38,5 +38,11 @@ run-backend-stack-only:
 run-all-stacks:
 	docker compose --profile alloy-api --profile frontend up --build
 
-install:
-	cd ./backend &&go get $(package)
+install-be:
+	cd ./backend && go mod download
+
+install-fe:
+	cd ./frontend && pnpm install
+
+run-frontend-stack-only:
+	cd ./frontend && pnpm dev
