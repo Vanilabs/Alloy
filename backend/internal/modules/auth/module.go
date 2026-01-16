@@ -16,7 +16,7 @@ type Module struct {
 
 func NewModule(store *constants.DataStores, logger *zap.Logger, notification *notifications.Notification, userRepository users.Repository) *Module {
 
-	repository := NewRepository(store)
+	repository := NewRepository(store, logger)
 	service := NewService(repository, logger, notification, userRepository)
 	handler := NewHandler(service)
 

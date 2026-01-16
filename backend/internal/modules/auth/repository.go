@@ -34,8 +34,15 @@ type authRepository struct {
 	logger *zap.Logger
 }
 
-func NewRepository(store *constants.DataStores) Repository {
-	return &authRepository{db: store.PostGres, redis: store.Redis}
+func NewRepository(store *constants.DataStores, logger *zap.Logger) Repository {
+	if logger == nil {
+		logger = zap.NewNop()
+	}
+	return &authRepository{
+		db:     store.PostGres,
+		redis:  store.Redis,
+		logger: logger,
+	}
 }
 
 func (r *authRepository) CreateInvitation(ctx context.Context, invitation *models.Invitation) error {
