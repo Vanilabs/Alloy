@@ -2,11 +2,11 @@ package main
 
 import (
 	"alloy/internal/app"
-	"alloy/internal/shared/config"
-	"alloy/internal/shared/database"
 	"alloy/internal/shared/cache"
-	"alloy/internal/shared/router"
+	"alloy/internal/shared/config"
 	"alloy/internal/shared/constants"
+	"alloy/internal/shared/database"
+	"alloy/internal/shared/router"
 	"fmt"
 	"os"
 	"os/signal"
@@ -27,8 +27,8 @@ func main() {
 
 	fiberApp := router.InitRouterWithConfig(cfg, zapLogger.Logger)
 
-	rds, err :=  cache.GetRedisClient(cfg, zapLogger.Logger, 0)
-	if err != nil{
+	rds, err := cache.GetRedisClient(cfg, zapLogger.Logger, 0)
+	if err != nil {
 		zapLogger.Logger.Error("Failed to connect to Redis", zap.Error(err))
 		os.Exit(1)
 	}
@@ -45,6 +45,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	zapLogger.Logger.Info("Connected to cassandra database")
+
 	defer cassandradb.Close()
 
 	err = database.CreateCassandraEntities(cassandradb)
@@ -54,13 +56,13 @@ func main() {
 	}
 
 	stores := &constants.DataStores{
-		Redis: rds,
-		PostGres: pgdb,
+		Redis:     rds,
+		PostGres:  pgdb,
 		Cassandra: cassandradb,
 	}
 
 	services := router.NewModuleServices()
-		
+
 	// create environment...
 	env := router.NewEnvironment(cfg, fiberApp, zapLogger.Logger, stores, services)
 

@@ -41,7 +41,7 @@ func (h *Handler) inviteUser(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	err := h.service.InviteUser(ctx, req.Email, req.Role, "4d6b5f06-a632-4f30-a808-b3585d433067")
+	err := h.service.InviteUser(ctx, req.Email, req.Role, "54dfcc8f-a7ee-44c0-9758-fa17e28a90d0") // temp
 	if err != nil {
 		if errors.Is(err, users.ErrEmailAlreadyExists) {
 			return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": "email already exists"})

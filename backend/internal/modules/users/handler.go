@@ -88,7 +88,7 @@ func (h *Handler) createUser(c *fiber.Ctx) error {
 	user := &models.User{
 		FirstName:   req.FirstName,
 		LastName:    req.LastName,
-		RoleAtMBL:   req.RoleAtMBL,
+		RoleAtOrg:   req.RoleAtOrg,
 		Email:       req.Email,
 		Phone:       req.Phone,
 		DateOfBirth: req.DateOfBirth,
