@@ -21,3 +21,4 @@
 *codemagic.keystore
 /backend/.env.docker
 /backend/.env.staging
+.envrc

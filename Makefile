@@ -2,6 +2,8 @@
 
 
 export POSTGRES_DSN ?= $(shell grep POSTGRES_DSN backend/.env 2>/dev/null | cut -d '=' -f2- | tr -d '"')
+export GOOSE_DRIVER ?= postgres
+export GOOSE_DBSTRING ?= $(shell grep GOOSE_DBSTRING .envrc 2>/dev/null | cut -d '=' -f2- | tr -d '"' || echo "postgres://alloy:alloy_secret@localhost:5432/alloydb?sslmode=disable")
 
 build:
 	cd backend && go build -o bin/alloy ./cmd
@@ -19,19 +21,28 @@ migrate-create:
 	cd backend && goose -dir internal/shared/database/migrations create $(name) sql
 
 migrate-up:
-	cd backend && goose -dir internal/shared/database/migrations postgres "$$POSTGRES_DSN" up
+	cd backend && GOOSE_DRIVER=$(GOOSE_DRIVER) GOOSE_DBSTRING=$(GOOSE_DBSTRING) goose -dir internal/shared/database/migrations up
 
 migrate-down:
-	cd backend && goose -dir internal/shared/database/migrations postgres "$$POSTGRES_DSN" down
+	cd backend && GOOSE_DRIVER=$(GOOSE_DRIVER) GOOSE_DBSTRING=$(GOOSE_DBSTRING) goose -dir internal/shared/database/migrations down
 
 migrate-status:
-	cd backend && goose -dir internal/shared/database/migrations postgres "$$POSTGRES_DSN" status
+	cd backend && GOOSE_DRIVER=$(GOOSE_DRIVER) GOOSE_DBSTRING=$(GOOSE_DBSTRING) goose -dir internal/shared/database/migrations status
 
 test-backend:
 	cd backend && go test ./tests/...
 
 run-backend-stack-only:
-	docker compose --profile backend up --build
+	docker compose --profile alloy-api up --build
 
 run-all-stacks:
-	docker compose --profile backend --profile frontend up --build
+	docker compose --profile alloy-api --profile frontend up --build
+
+install-be:
+	cd ./backend && go mod download
+
+install-fe:
+	cd ./frontend && pnpm install
+
+run-frontend-stack-only:
+	cd ./frontend && pnpm dev

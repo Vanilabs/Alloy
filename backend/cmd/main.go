@@ -2,11 +2,12 @@ package main
 
 import (
 	"alloy/internal/app"
-	"alloy/internal/shared/config"
-	"alloy/internal/shared/database"
 	"alloy/internal/shared/cache"
-	"alloy/internal/shared/router"
+	"alloy/internal/shared/config"
 	"alloy/internal/shared/constants"
+	"alloy/internal/shared/database"
+	"alloy/internal/shared/router"
+	"alloy/internal/shared/utils"
 	"fmt"
 	"os"
 	"os/signal"
@@ -25,10 +26,15 @@ func main() {
 
 	zapLogger.Logger.Info("Welcome to Alloy Backend")
 
+	jwtManager := utils.NewJWTManager(
+		cfg.JwtSecret,
+		cfg.RefreshTokenSecret,
+	)
+
 	fiberApp := router.InitRouterWithConfig(cfg, zapLogger.Logger)
 
-	rds, err :=  cache.GetRedisClient(cfg, zapLogger.Logger, 0)
-	if err != nil{
+	rds, err := cache.GetRedisClient(cfg, zapLogger.Logger, 0)
+	if err != nil {
 		zapLogger.Logger.Error("Failed to connect to Redis", zap.Error(err))
 		os.Exit(1)
 	}
@@ -45,6 +51,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	zapLogger.Logger.Info("Connected to cassandra database")
+
 	defer cassandradb.Close()
 
 	err = database.CreateCassandraEntities(cassandradb)
@@ -54,18 +62,18 @@ func main() {
 	}
 
 	stores := &constants.DataStores{
-		Redis: rds,
-		PostGres: pgdb,
+		Redis:     rds,
+		PostGres:  pgdb,
 		Cassandra: cassandradb,
 	}
 
 	services := router.NewModuleServices()
-		
+
 	// create environment...
 	env := router.NewEnvironment(cfg, fiberApp, zapLogger.Logger, stores, services)
 
 	// initialize all modules...
-	modules, err := app.InitModules(env)
+	modules, err := app.InitModules(env, jwtManager)
 	if err != nil {
 		zapLogger.Logger.Error("Failed to initialize modules", zap.Error(err))
 		os.Exit(1)

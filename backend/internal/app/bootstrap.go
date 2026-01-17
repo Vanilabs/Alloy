@@ -8,6 +8,7 @@ import (
 	"alloy/internal/shared/constants"
 	"alloy/internal/shared/notifications"
 	"alloy/internal/shared/router"
+	"alloy/internal/shared/utils"
 
 	"alloy/internal/shared/socket"
 
@@ -21,9 +22,8 @@ type Modules struct {
 	Auth      *auth.Module
 }
 
-func InitModules(env *router.Environment) (*Modules, error)  {
+func InitModules(env *router.Environment, jwtManager *utils.JWTManager) (*Modules, error) {
 	env.Logger.Info("Initializing modules...")
-
 
 	socketTracker := socket.NewSocketTracker(env.Stores.Redis)
 	socketManager := socket.NewManager(socketTracker)
@@ -33,11 +33,11 @@ func InitModules(env *router.Environment) (*Modules, error)  {
 		return nil, err
 	}
 
-	usersModule := users.NewModule(env.Stores.PostGres, env.Logger, notification)
+	usersModule := users.NewModule(env.Stores, env.Logger, notification)
 	messagingModule := messaging.NewModule(socketManager, env)
-	authModule := auth.NewModule(env.Stores.PostGres, env.Logger, notification, usersModule.Repository)
+	authModule := auth.NewModule(env.Stores, env.Logger, notification, usersModule.Repository, jwtManager)
 
-		return &Modules{
+	return &Modules{
 		Users:     usersModule,
 		Messaging: messagingModule,
 		Auth:      authModule,
@@ -54,7 +54,6 @@ func RegisterNotifications(cfg *config.Config, logger *zap.Logger) (*notificatio
 
 	return notifications.NewNotification(email), nil
 }
-
 
 func RegisterServices(modules *Modules, services *router.ModuleServices) {
 	services.Register(constants.USERS_MODULE_NAME, modules.Users.Service)

@@ -1,0 +1,2 @@
+export GOOSE_DRIVER=postgres
+export GOOSE_DBSTRING="postgres://superuser:masterKey@localhost:5432/test?sslmode=disable"
