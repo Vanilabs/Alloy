@@ -3,7 +3,9 @@ package auth
 import (
 	"alloy/internal/modules/users"
 	"alloy/internal/shared/database/models"
+	"alloy/internal/shared/middlewares"
 	"alloy/internal/shared/router"
+	"alloy/internal/shared/validations"
 	"alloy/internal/shared/validations/schemas"
 	"context"
 	"errors"
@@ -33,8 +35,12 @@ func (h *Handler) Init(basePath string, env *router.Environment) error {
 
 	authGroup.Post("/magic-link", h.requestMagicLink)
 	authGroup.Post("/magic-link/verify", h.verifyMagicLink)
-	authGroup.Post("/invite", h.inviteUser)
 	authGroup.Patch("/accept", h.acceptInvitation)
+
+	// Protected routes
+	authChecker := middlewares.JWTMiddleware(h.env)
+	authGroup.Post("/invite", authChecker, h.inviteUser)
+
 	return nil
 }
 
@@ -42,12 +48,19 @@ func (h *Handler) inviteUser(c *fiber.Ctx) error {
 	ctx, cancel := context.WithTimeout(c.UserContext(), time.Minute)
 	defer cancel()
 
-	var req InviteUserRequest
-	if err := c.BodyParser(&req); err != nil {
+	var req schemas.InviteUserSchema
+	if err := validations.ParseAndValidateBodyWithMessages(c, &req, req.Messages()); err != nil {
+		// Handle validation errors
+		if errList, ok := err.(*validations.ErrorList); ok {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": errList.Error()})
+		}
+		if valErr, ok := err.(*validations.ValidationError); ok {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": valErr.Error()})
+		}
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	err := h.service.InviteUser(ctx, req.Email, req.Role, "54dfcc8f-a7ee-44c0-9758-fa17e28a90d0") // temp
+	err := h.service.InviteUser(ctx, &req, c.Locals("user_id").(string))
 	if err != nil {
 		if errors.Is(err, users.ErrEmailAlreadyExists) {
 			return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": "email already exists"})
@@ -67,7 +80,7 @@ func (h *Handler) acceptInvitation(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	err := h.service.AcceptInvitation(ctx, req.Token, req.Email)
+	response, err := h.service.AcceptInvitation(ctx, req.Token, req.Email)
 	if err != nil {
 		if errors.Is(err, ErrInvitationAlreadyVerified) {
 			return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": "invitation already verified"})
@@ -75,10 +88,16 @@ func (h *Handler) acceptInvitation(c *fiber.Ctx) error {
 		if errors.Is(err, ErrInvitationNotFound) {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "invitation not found"})
 		}
+		if errors.Is(err, ErrInvitationAlreadyAccepted) {
+			return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": "invitation already accepted"})
+		}
+		if errors.Is(err, ErrInvitationExpired) {
+			return c.Status(fiber.StatusGone).JSON(fiber.Map{"error": "invitation expired"})
+		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to verify invitation"})
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "invitation verified successfully"})
+	return c.Status(fiber.StatusOK).JSON(response)
 }
 
 func (h *Handler) requestMagicLink(c *fiber.Ctx) error {

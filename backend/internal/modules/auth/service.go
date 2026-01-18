@@ -6,18 +6,21 @@ import (
 	"alloy/internal/shared/database/models"
 	"alloy/internal/shared/notifications"
 	"alloy/internal/shared/utils"
+	"alloy/internal/shared/validations/schemas"
 	"context"
+	"errors"
 	"os"
 	"time"
 
 	"github.com/google/uuid"
 	"go.uber.org/zap"
+	"gorm.io/gorm"
 )
 
 type Service interface {
-	InviteUser(ctx context.Context, email string, role string, adminId string) error
+	InviteUser(ctx context.Context, payload *schemas.InviteUserSchema, adminId string) error
 	VerifyInvitation(ctx context.Context, token string, email string) error
-	AcceptInvitation(ctx context.Context, token string, email string) error
+	AcceptInvitation(ctx context.Context, token string, email string) (*models.LoginResponse, error)
 	RequestMagicLink(ctx context.Context, email string) error
 	VerifyMagicLink(ctx context.Context, token string, sessionInfo *models.UserSessionInfo) (*models.LoginResponse, error)
 }
@@ -40,18 +43,29 @@ func NewService(repository Repository, logger *zap.Logger, notification *notific
 	}
 }
 
-func (s *authService) InviteUser(ctx context.Context, email string, role string, adminId string) error {
+func (s *authService) InviteUser(ctx context.Context, payload *schemas.InviteUserSchema, adminId string) error {
+	email := payload.Email
+	role := payload.Role
+	roleAtOrg := payload.RoleAtOrg
+	department := payload.Department
+	phone := payload.Phone
+
 	_, err := s.userRepository.GetUserByEmail(ctx, email)
 	if err == nil {
 		return users.ErrEmailAlreadyExists
 	}
 
 	invitation := &models.Invitation{
-		Email:     email,
-		Role:      role,
-		InvitedBy: uuid.MustParse(adminId),
-		Token:     uuid.New().String(),
-		ExpiresAt: time.Now().Add(time.Hour * 24 * 7),
+		FirstName:  payload.FirstName,
+		LastName:   payload.LastName,
+		Email:      email,
+		Role:       role,
+		RoleAtOrg:  roleAtOrg,
+		Department: department,
+		Phone:      phone,
+		InvitedBy:  uuid.MustParse(adminId),
+		Token:      uuid.New().String(),
+		ExpiresAt:  time.Now().Add(time.Hour * 24 * 7),
 	}
 
 	err = s.repository.CreateInvitation(ctx, invitation)
@@ -93,24 +107,136 @@ func (s *authService) VerifyInvitation(ctx context.Context, token string, email 
 	return nil
 }
 
-func (s *authService) AcceptInvitation(ctx context.Context, token string, email string) error {
+func (s *authService) AcceptInvitation(ctx context.Context, token string, email string) (*models.LoginResponse, error) {
 	invitation, err := s.repository.GetInvitationByTokenAndEmail(ctx, token, email)
 	if err != nil {
-		return err
+		s.logger.Info("invitation not found", zap.Error(err), zap.String("token", token), zap.String("email", email))
+		return nil, err
+	}
+	if invitation.Status == models.InvitationStatusAccepted {
+		s.logger.Info("invitation already accepted", zap.String("token", token), zap.String("email", email))
+		return nil, ErrInvitationAlreadyAccepted
 	}
 
 	if invitation.ExpiresAt.Before(time.Now()) {
-		return ErrInvitationExpired
+		s.logger.Info("invitation expired", zap.Error(err), zap.String("token", token), zap.String("email", email))
+		return nil, ErrInvitationExpired
 	}
 
-	invitation.Status = "verified"
+	employeeNumber, err := utils.GenerateEmployeeNumber()
+	if err != nil {
+		s.logger.Info("failed to generate employee number", zap.Error(err), zap.String("token", token), zap.String("email", email))
+		return nil, err
+	}
+
+	for i := 1; i <= 10; i++ {
+		_, err = s.userRepository.GetUserByEmployeeNumber(ctx, employeeNumber)
+		if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
+			break
+		}
+		employeeNumber, err = utils.GenerateEmployeeNumber()
+		if err != nil {
+			s.logger.Info("failed to generate employee number: trying again", zap.Error(err), zap.String("token", token), zap.String("email", email), zap.Int("attempt", i))
+		}
+	}
+
+	// if err != nil {
+	// 	s.logger.Info("failed to generate employee number", zap.Error(err), zap.String("token", token), zap.String("email", email))
+	// 	return nil, err
+	// }
+
+	invitation.Status = models.InvitationStatusAccepted
 	now := time.Now()
 	invitation.AcceptedAt = &now
 	err = s.repository.UpdateInvitation(ctx, invitation)
 	if err != nil {
-		return err
+		s.logger.Info("failed to update invitation", zap.Error(err), zap.String("token", token), zap.String("email", email))
+		return nil, err
 	}
-	return nil
+
+	user := &models.User{
+		FirstName:      invitation.FirstName,
+		LastName:       invitation.LastName,
+		Email:          email,
+		Role:           invitation.Role,
+		RoleAtOrg:      invitation.RoleAtOrg,
+		Department:     invitation.Department,
+		Phone:          invitation.Phone,
+		EmployeeNumber: employeeNumber,
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+	}
+
+	err = s.userRepository.CreateUser(ctx, user)
+	if err != nil {
+		s.logger.Info("failed to create user", zap.Error(err), zap.String("token", token), zap.String("email", email))
+		return nil, err
+	}
+
+	s.logger.Info("user created", zap.String("user_id", user.ID.String()), zap.String("email", email), zap.String("employee_number", employeeNumber))
+
+	// handle email notificaion
+	html, err := s.notification.Email.TemplateParser.Parse("welcome.html", map[string]interface{}{
+		"firstName":      user.FirstName,
+		"lastName":       user.LastName,
+		"employeeNumber": user.EmployeeNumber,
+	})
+	if err != nil {
+		s.logger.Error("failed to parse welcome template", zap.Error(err))
+		return nil, err
+	}
+
+	notificationPayload := &notifications.NotificationPayload{
+		To:      email,
+		Subject: "Welcome to Alloy",
+		Body:    "Welcome to Alloy. You are now setup and ready to go.",
+		HTML:    html,
+	}
+
+	err = s.notification.Email.Send(notificationPayload)
+	if err != nil {
+		s.logger.Error("failed to send welcome email", zap.Error(err))
+		return nil, err
+	}
+
+	s.logger.Info("welcome email sent", zap.String("email", email))
+
+	// generate jwt token
+	tokenID := uuid.New().String()
+	jwtData := &models.JWTData{
+		UserID:  user.ID.String(),
+		Email:   user.Email,
+		TokenID: tokenID,
+		Role:    user.Role,
+	}
+
+	accessToken, err := s.jwtManager.GenerateJWT(jwtData)
+	if err != nil {
+		s.logger.Error("failed to generate access token", zap.Error(err))
+		return nil, err
+	}
+
+	refreshToken, err := s.jwtManager.GenerateRefreshToken(user.ID.String(), tokenID)
+	if err != nil {
+		s.logger.Error("failed to generate refresh token", zap.Error(err))
+		return nil, err
+	}
+
+	user, err = s.userRepository.GetUserByEmail(ctx, email)
+	if err != nil {
+		s.logger.Error("failed to get user by email", zap.Error(err), zap.String("email", email))
+		return nil, err
+	}
+
+	return &models.LoginResponse{
+		Auth: models.JwtAuthData{
+			AccessToken:  accessToken,
+			RefreshToken: refreshToken,
+			ExpiresIn:    int(utils.SessionExpiry.Seconds()),
+			TokenType:    "Bearer",
+		},
+		User: *user,
+	}, nil
 }
 
 func (s *authService) RequestMagicLink(ctx context.Context, email string) error {
