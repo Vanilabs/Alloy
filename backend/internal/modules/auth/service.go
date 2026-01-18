@@ -123,27 +123,41 @@ func (s *authService) AcceptInvitation(ctx context.Context, token string, email 
 		return nil, ErrInvitationExpired
 	}
 
-	employeeNumber, err := utils.GenerateEmployeeNumber()
-	if err != nil {
-		s.logger.Info("failed to generate employee number", zap.Error(err), zap.String("token", token), zap.String("email", email))
-		return nil, err
-	}
+	// Generate a unique employee number with retry logic
+	var employeeNumber string
+	maxRetries := 10
+	foundAvailable := false
 
-	for i := 1; i <= 10; i++ {
-		_, err = s.userRepository.GetUserByEmployeeNumber(ctx, employeeNumber)
-		if err != nil && errors.Is(err, gorm.ErrRecordNotFound) {
-			break
-		}
+	for i := 1; i <= maxRetries; i++ {
+		var err error
 		employeeNumber, err = utils.GenerateEmployeeNumber()
 		if err != nil {
-			s.logger.Info("failed to generate employee number: trying again", zap.Error(err), zap.String("token", token), zap.String("email", email), zap.Int("attempt", i))
+			s.logger.Error("failed to generate employee number", zap.Error(err), zap.String("token", token), zap.String("email", email), zap.Int("attempt", i))
+			return nil, err
 		}
+
+		// Check if employee number already exists
+		_, err = s.userRepository.GetUserByEmployeeNumber(ctx, employeeNumber)
+		if err != nil {
+			// If record not found, the number is available - we can use it
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				foundAvailable = true
+				break
+			}
+			// For other database errors, log and return
+			s.logger.Error("database error while checking employee number", zap.Error(err), zap.String("token", token), zap.String("email", email), zap.String("employee_number", employeeNumber))
+			return nil, err
+		}
+
+		// If no error, user exists - collision detected, try again
+		s.logger.Info("employee number collision detected, generating new one", zap.String("employee_number", employeeNumber), zap.Int("attempt", i))
 	}
 
-	// if err != nil {
-	// 	s.logger.Info("failed to generate employee number", zap.Error(err), zap.String("token", token), zap.String("email", email))
-	// 	return nil, err
-	// }
+	// If we exhausted all retries without finding an available number, return an error
+	if !foundAvailable {
+		s.logger.Error("failed to generate unique employee number after max retries", zap.String("token", token), zap.String("email", email), zap.Int("max_retries", maxRetries))
+		return nil, errors.New("failed to generate unique employee number after maximum retries")
+	}
 
 	invitation.Status = models.InvitationStatusAccepted
 	now := time.Now()
