@@ -70,7 +70,7 @@ func main() {
 	services := router.NewModuleServices()
 
 	// create environment...
-	env := router.NewEnvironment(cfg, fiberApp, zapLogger.Logger, stores, services)
+	env := router.NewEnvironment(cfg, fiberApp, zapLogger.Logger, stores, services, jwtManager)
 
 	// initialize all modules...
 	modules, err := app.InitModules(env, jwtManager)

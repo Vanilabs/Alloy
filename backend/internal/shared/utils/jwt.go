@@ -109,3 +109,11 @@ func (j *JWTManager) VerifyRefreshToken(refreshToken string) (*models.Claims, er
 
 	return claims, nil
 }
+
+func (j *JWTManager) ExtractTokenFromHeader(authHeader string) string {
+	const prefix = "Bearer "
+	if len(authHeader) > len(prefix) && authHeader[:len(prefix)] == prefix {
+		return authHeader[len(prefix):]
+	}
+	return ""
+}

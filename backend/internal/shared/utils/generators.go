@@ -3,6 +3,8 @@ package utils
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"fmt"
+	"math/big"
 )
 
 func GenerateSecureToken(length int) (string, error) {
@@ -11,4 +13,15 @@ func GenerateSecureToken(length int) (string, error) {
 		return "", err
 	}
 	return hex.EncodeToString(bytes), nil
+}
+
+func GenerateEmployeeNumber() (string, error) {
+	max := big.NewInt(1000000)
+	randomNum, err := rand.Int(rand.Reader, max)
+	if err != nil {
+		return "", err
+	}
+
+	employeeNumber := fmt.Sprintf("EM%06d", randomNum.Int64())
+	return employeeNumber, nil
 }

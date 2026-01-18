@@ -12,7 +12,6 @@ type User struct {
 	LastName       string     `gorm:"type:varchar(255);not null" json:"last_name"`
 	RoleAtOrg      string     `gorm:"type:varchar(255);not null" json:"role_at_org"`
 	Role           string     `gorm:"type:varchar(50);not null" json:"role"`
-	Password       *string    `gorm:"type:varchar(255)" json:"-"`
 	Email          string     `gorm:"type:varchar(255);not null;unique" json:"email"`
 	Phone          string     `gorm:"type:varchar(255);not null;unique" json:"phone"`
 	DateOfBirth    *time.Time `gorm:"type:date" json:"date_of_birth,omitempty"`
