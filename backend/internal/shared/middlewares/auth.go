@@ -67,10 +67,9 @@ func JWTMiddleware(env *router.Environment) fiber.Handler {
 				if errors.Is(err, sql.ErrNoRows) || err == users.ErrUserNotFound {
 					return utils.SendErrorResponse(
 						c, fiber.StatusUnauthorized,
-						models.ErrInvalidOrExpiredToken.Error(), // Don't reveal user existence
+						models.ErrInvalidOrExpiredToken.Error(),
 					)
 				}
-				// For other errors (timeout, DB errors), return generic error
 				return utils.SendErrorResponse(
 					c, fiber.StatusUnauthorized,
 					models.ErrInvalidOrExpiredToken.Error(),
