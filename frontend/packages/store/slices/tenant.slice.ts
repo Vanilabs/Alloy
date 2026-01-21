@@ -33,11 +33,12 @@ const tenantSlice = createSlice({
                     state.initialized = true
                 },
         setTenant(state, action: PayloadAction<TenantContext>) {
-            Object.assign(state, action.payload)
+            console.log('tenantSlice.setTenant', action.payload);
+            state.tenant = action.payload;
         },
         resetRuntime(state) {
-                    Object.assign(state, initialState)
-                },
+            Object.assign(state, initialState)
+        },
         clearTenant(state) {
             Object.assign(state, initialState)
         },

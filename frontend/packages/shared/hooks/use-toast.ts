@@ -1,15 +1,20 @@
+"use client";
+
 import * as React from "react";
 
 import type { ToastActionElement, ToastProps } from "../../ui";
+export type AlertType = 'success' | 'error' | 'warning' | 'info';
 
 const TOAST_LIMIT = 1;
-const TOAST_REMOVE_DELAY = 1000000;
+const TOAST_REMOVE_DELAY = 3000; // auto remove after 3 seconds
 
 type ToasterToast = ToastProps & {
     id: string;
+    status?: AlertType;
     title?: React.ReactNode;
     description?: React.ReactNode;
     action?: ToastActionElement;
+    duration?: number;
 };
 
 const actionTypes = {

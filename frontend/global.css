@@ -45,6 +45,9 @@ body {
 
         --primary: hsla(243, 75%, 59%, 1);
         --primary-foreground: hsla(243, 75%, 59%, 0.1);
+        --primary-10: hsla(241, 83%, 65%, 0.1);
+
+        --white: hsla(0, 0%, 100%, 1);
 
         --primary-main: var(--primary-600);
         --primary-hover: hsl(241 83% 60%);
@@ -59,8 +62,12 @@ body {
         --gray-5:   hsl(210 40% 98%);
         --gray-20:  hsl(214 32% 91%);
         --gray-60:  hsl(215 19% 35%);
+        --gray-300: hsla(214, 32%, 91%, 1);
 
         --gray-1: hsla(215, 19%, 35%, 1);
+        --gray: hsla(215, 19%, 35%, 1);
+
+        --transparent: hsla(0, 0%, 100%, 0.32);
 
         /* Status */
         --orange-200: hsl(39 96% 89%);

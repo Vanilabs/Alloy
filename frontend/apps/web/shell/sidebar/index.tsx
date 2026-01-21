@@ -52,7 +52,7 @@ export function Sidebar({
     const { slot, showMobileChat } = useSidebarSlot();
     const [activeNav, setActiveNav] = useState<string>("Home");
 
-    console.log('Sidebar Data:', navData);
+    console.log('Sidebar Data:', navData, nav);
 
     // useEffect(() => {
     //     if (pathname) setActiveNav(pathname);

@@ -1,18 +1,16 @@
 import { configureStore } from '@reduxjs/toolkit'
-import { auth, chat, features, tenant } from './slices'
+import { auth, chat, features, runtime, tenant } from './slices'
 // import tenant from './slices/tenant.slice'
 // import permissions from './slices/permissions.slice'
 // import features from './slices/features.slice'
 
 export const store = configureStore({
     reducer: {
-        // runtime: runtimeReducer,
+        runtime: runtime.default,
         auth: auth.default,
         chat: chat.default,
         features: features.default,
         tenant: tenant.default,
-        // permissions,
-        // features,
     },
     devTools: process.env.NODE_ENV !== 'production',
 })
