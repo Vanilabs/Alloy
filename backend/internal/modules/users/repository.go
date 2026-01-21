@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"errors"
+
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -22,6 +23,7 @@ type Repository interface {
 	UpdateUser(ctx context.Context, user *models.User) error
 	DeleteUser(ctx context.Context, id uuid.UUID) error
 	FindAllUsersWithEmails(ctx context.Context, emails []string) ([]models.User, error)
+	GetUserByEmployeeNumber(ctx context.Context, employeeNumber string) (*models.User, error)
 }
 
 type userRepository struct {
@@ -75,7 +77,6 @@ func (r *userRepository) UpdateUser(ctx context.Context, user *models.User) erro
 func (r *userRepository) DeleteUser(ctx context.Context, id uuid.UUID) error {
 	return r.db.WithContext(ctx).Delete(&models.User{}, "id = ?", id).Error
 }
-
 
 func (r *userRepository) FindAllUsersWithEmails(
 	ctx context.Context,
@@ -136,4 +137,12 @@ func (r *userRepository) FindAllUsersWithEmails(
 	}
 
 	return users, nil
+}
+
+func (r *userRepository) GetUserByEmployeeNumber(ctx context.Context, employeeNumber string) (*models.User, error) {
+	var user models.User
+	if err := r.db.WithContext(ctx).Where("employee_number = ?", employeeNumber).First(&user).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
 }

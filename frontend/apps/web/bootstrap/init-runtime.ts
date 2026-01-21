@@ -20,11 +20,13 @@ export const useInitRuntime = () => {
     const dispatch = useDispatch()
 
     useEffect(() => {
+        if (registry.isInitialized()) return
         if (runtimeBootstrapped) return
         runtimeBootstrapped = true
 
         const run = async () => {
             try {
+                console.log('🚀 Bootstrapping Alloy OS runtime...')
                 // const session = await getSession()
 
                 const session = await store.dispatch(getSession());

@@ -3,12 +3,11 @@ package router
 import (
 	"alloy/internal/shared/config"
 	"alloy/internal/shared/constants"
+	"alloy/internal/shared/utils"
 	"fmt"
 
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
-	
-	
 )
 
 // ModuleServices holds all module services that can be used by handlers
@@ -32,11 +31,12 @@ func (ms *ModuleServices) Get(name string) interface{} {
 
 // Environment provides shared context for all handlers
 type Environment struct {
-	Config   *config.Config
-	Fiber    *fiber.App
-	Logger   *zap.Logger
-	Stores *constants.DataStores
-	Services *ModuleServices
+	Config     *config.Config
+	Fiber      *fiber.App
+	Logger     *zap.Logger
+	Stores     *constants.DataStores
+	Services   *ModuleServices
+	JWTManager *utils.JWTManager
 }
 
 // IHandler defines the interface that all module handlers must implement
@@ -44,14 +44,15 @@ type IHandler interface {
 	Init(basePath string, env *Environment) error
 }
 
-func NewEnvironment(cfg *config.Config, fiberApp *fiber.App, 
-	logger *zap.Logger, stores *constants.DataStores, services *ModuleServices) *Environment {
+func NewEnvironment(cfg *config.Config, fiberApp *fiber.App,
+	logger *zap.Logger, stores *constants.DataStores, services *ModuleServices, jwtManager *utils.JWTManager) *Environment {
 	return &Environment{
-		Config:   cfg,
-		Fiber:    fiberApp,
-		Logger:   logger,
-		Stores: stores,
-		Services: services,
+		Config:     cfg,
+		Fiber:      fiberApp,
+		Logger:     logger,
+		Stores:     stores,
+		Services:   services,
+		JWTManager: jwtManager,
 	}
 }
 
