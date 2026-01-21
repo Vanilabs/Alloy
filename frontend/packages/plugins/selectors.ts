@@ -3,10 +3,14 @@ import { registry } from './registry'
 import type { AlloyModule, NavigationItem } from '@/packages/shared/types'
 import { RootState } from '../store'
 
-const selectTenant = (s: RootState) => s.tenant.tenant
+const selectTenant = (s: RootState) => s.tenant.tenant;
+
+console.log('selectTenant', selectTenant);
 
 export const selectEnabledModules = createSelector([selectTenant], (tenant): AlloyModule[] => {
     const all = registry.getModules()
+    console.log('selectEnabledModules - all modules:', all);
+    console.log('selectEnabledModules - tenant:', tenant);
     if (!tenant) return []
 
     return all.filter(m => {

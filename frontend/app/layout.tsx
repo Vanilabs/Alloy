@@ -1,5 +1,6 @@
 import { Metadata } from 'next'
 import "../global.css"
+import { Providers } from './(public)/provider';
 
 export const metadata: Metadata = {
     title: ". : : Alloy System : : .",
@@ -13,7 +14,9 @@ export default function PublicRootLayout({ children }: { children: React.ReactNo
     return (
         <html lang="en" className="light">
             <body>
-                {children}
+                <Providers>
+                    {children}
+                </Providers>
             </body>
         </html>
     )

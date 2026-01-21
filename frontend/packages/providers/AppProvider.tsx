@@ -8,6 +8,7 @@ import { useInitRuntime } from '@/apps/web/bootstrap/init-runtime';
 
 function RuntimeBootstrap() {
     useInitRuntime()
+    console.log('Here')
     return null
 }
 

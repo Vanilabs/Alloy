@@ -1,3 +1,8 @@
+export type RouteNode = {
+  path: string // e.g. "/chat" or "/chat/channel/:channelId"
+  // render is in module registry, not redux
+}
+
 export interface AlloyModule {
     id: string
     name: string
