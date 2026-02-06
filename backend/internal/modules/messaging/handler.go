@@ -6,6 +6,10 @@ import (
 
 	"alloy/internal/shared/constants"
 
+	"alloy/internal/shared/database/models"
+
+	"alloy/internal/shared/middlewares"
+
 	"strconv"
 
 	"time"
@@ -47,6 +51,9 @@ func (h *Handler) Init(basePath string, env *router.Environment) error {
 	h.env = env
 
 	chatGroup := env.Fiber.Group(basePath + "/chat")
+
+	chatGroup.Use(middlewares.JWTMiddleware(env))
+
 	chatGroup.Get("/send_message", websocket.New(h.handleActiveChat))
 	chatGroup.Get("/messages", h.getConversationMessages)
 	chatGroup.Post("/create", h.InitiateChat)
@@ -77,27 +84,27 @@ func (h *Handler) getConversationMessages(c *fiber.Ctx) error {
 
 func (h *Handler) handleActiveChat(c *websocket.Conn) {
 
-	ctx := context.Background()
-
-	userID := c.Query("user_id")
-
-	parsedUserID, err := uuid.Parse(userID)
-	if err != nil {
-		c.WriteMessage(websocket.TextMessage, []byte("invalid user_id"))
+	user, ok := c.Locals("user").(*models.User)
+    if !ok {
+        c.WriteJSON(fiber.Map{"error": "user context missing"})
 		c.Close()
 		return
-	}
+    }
+
+	ctx := context.Background()
+
+	parsedUserID := user.ID
 
 	socketID := uuid.NewString()
 
 	h.connectionManager.Add(socketID, c)
-	if err := h.connectionManager.SocketTracker.AddSocketForUser(userID, socketID); err != nil {
+	if err := h.connectionManager.SocketTracker.AddSocketForUser(parsedUserID.String(), socketID); err != nil {
 		h.connectionManager.Remove(socketID)
 			_ = c.Close()
 			return
 		}
 
-	h.env.Logger.Info("DM WebSocket connected", zap.String("userID", userID))
+	h.env.Logger.Info("DM WebSocket connected", zap.String("userID", parsedUserID.String()))
 
 	h.connectionManager.StartHeartbeat(ctx, socketID, c)
 
@@ -134,7 +141,7 @@ func (h *Handler) handleActiveChat(c *websocket.Conn) {
 	for {
 		_, msg, err := c.ReadMessage()
 		if err != nil {
-			h.env.Logger.Info("DM WebSocket disconnected", zap.String("userID", userID))
+			h.env.Logger.Info("DM WebSocket disconnected", zap.String("userID", parsedUserID.String()))
 			h.connectionManager.CleanupDeadSocket(socketID)
 			break
 		}
@@ -142,7 +149,7 @@ func (h *Handler) handleActiveChat(c *websocket.Conn) {
 		err = json.Unmarshal(msg, &payload)
 		if err != nil {
     		c.WriteMessage(websocket.TextMessage, []byte("Invalid Payload"))
-    		h.env.Logger.Warn("Invalid message payload", zap.String("userID", userID), zap.Error(err))
+    		h.env.Logger.Warn("Invalid message payload", zap.String("userID", parsedUserID.String()), zap.Error(err))
     		continue
 }		
 
