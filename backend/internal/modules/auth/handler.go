@@ -27,6 +27,9 @@ func NewHandler(service Service) *Handler {
 	return &Handler{service: service}
 }
 
+
+
+
 func (h *Handler) Init(basePath string, env *router.Environment) error {
 	h.logger = env.Logger
 	h.env = env

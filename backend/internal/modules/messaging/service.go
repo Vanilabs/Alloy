@@ -233,3 +233,4 @@ func (ms *messagingService) InitiateChat(ctx context.Context, channel_config Cre
 		channelId: channel_id,
 	}, nil
 }
+
