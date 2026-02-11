@@ -18,13 +18,10 @@ import (
 
 	"strings"
 
-
-
 	"encoding/json"
 
 	"github.com/google/uuid"
 	"go.uber.org/zap"
-
 
 	"github.com/gofiber/fiber/v2"
 
@@ -44,6 +41,24 @@ func NewHandler(service Service, socketManager *socket.ConnectionManager) *Handl
 	}
 }
 
+func addOrUpdateAdmin(email string, dto *CreateChannelDTO) {
+    found := false
+
+    for i := range dto.Members {
+        if dto.Members[i].Email == email {
+            dto.Members[i].Role = constants.GroupAdmin
+            found = true
+            break 
+        }
+    }
+
+    if !found {
+        dto.Members = append(dto.Members, channelMember{
+            Email: email,
+            Role:  constants.GroupAdmin,
+        })
+    }
+}
 
 
 func (h *Handler) Init(basePath string, env *router.Environment) error {
@@ -93,18 +108,16 @@ func (h *Handler) handleActiveChat(c *websocket.Conn) {
 
 	ctx := context.Background()
 
-	parsedUserID := user.ID
-
 	socketID := uuid.NewString()
 
 	h.connectionManager.Add(socketID, c)
-	if err := h.connectionManager.SocketTracker.AddSocketForUser(parsedUserID.String(), socketID); err != nil {
+	if err := h.connectionManager.SocketTracker.AddSocketForUser(user.ID.String(), socketID); err != nil {
 		h.connectionManager.Remove(socketID)
 			_ = c.Close()
 			return
 		}
 
-	h.env.Logger.Info("DM WebSocket connected", zap.String("userID", parsedUserID.String()))
+	h.env.Logger.Info("DM WebSocket connected", zap.String("userID", user.ID.String()))
 
 	h.connectionManager.StartHeartbeat(ctx, socketID, c)
 
@@ -112,7 +125,7 @@ func (h *Handler) handleActiveChat(c *websocket.Conn) {
 			return nil
 		})
 
-	offlineMessages, err := h.service.GetOfflineMessages(ctx, parsedUserID, 100)
+	offlineMessages, err := h.service.GetOfflineMessages(ctx, user.ID, 100)
 	if err != nil {
 		h.env.Logger.Error("Fetch Offline Message error", zap.Error(err))
 		}
@@ -130,7 +143,7 @@ func (h *Handler) handleActiveChat(c *websocket.Conn) {
 			Text: offmsg.Text,
 			Timestamp: offmsg.Timestamp,
 			SenderID: GocqlToUUID(offmsg.SenderID),
-			RecipientID: parsedUserID,
+			RecipientID: user.ID,
 						}
 
 			h.env.Logger.Info("Now delivering Offline Message")
@@ -141,7 +154,7 @@ func (h *Handler) handleActiveChat(c *websocket.Conn) {
 	for {
 		_, msg, err := c.ReadMessage()
 		if err != nil {
-			h.env.Logger.Info("DM WebSocket disconnected", zap.String("userID", parsedUserID.String()))
+			h.env.Logger.Info("DM WebSocket disconnected", zap.String("userID", user.ID.String()))
 			h.connectionManager.CleanupDeadSocket(socketID)
 			break
 		}
@@ -149,7 +162,7 @@ func (h *Handler) handleActiveChat(c *websocket.Conn) {
 		err = json.Unmarshal(msg, &payload)
 		if err != nil {
     		c.WriteMessage(websocket.TextMessage, []byte("Invalid Payload"))
-    		h.env.Logger.Warn("Invalid message payload", zap.String("userID", parsedUserID.String()), zap.Error(err))
+    		h.env.Logger.Warn("Invalid message payload", zap.String("userID", user.ID.String()), zap.Error(err))
     		continue
 }		
 
@@ -160,7 +173,7 @@ func (h *Handler) handleActiveChat(c *websocket.Conn) {
     		continue
 		}
 
-		msgID, err := h.service.SaveMessage(payload.Text, payload.ConversationID, parsedUserID, payload.Timestamp)
+		msgID, err := h.service.SaveMessage(payload.Text, payload.ConversationID, user.ID, payload.Timestamp)
 		if err != nil {
 			h.env.Logger.Error("Failed to Save Message", zap.Error(err))
 			c.WriteMessage(websocket.TextMessage, []byte("Message Not Delivered, Resend!!"))
@@ -179,7 +192,7 @@ func (h *Handler) handleActiveChat(c *websocket.Conn) {
 			ConversationID: payload.ConversationID,
 			Text: payload.Text,
 			Timestamp: payload.Timestamp,
-			SenderID: parsedUserID,
+			SenderID: user.ID,
 			RecipientID: member.UserID,
 						}
 
@@ -195,6 +208,10 @@ func (h *Handler) handleActiveChat(c *websocket.Conn) {
 
 
 func (h *Handler) InitiateChat(c *fiber.Ctx) error {
+	user, ok := c.Locals("user").(*models.User)
+    if !ok {
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "user context missing"})
+    }
 	ctx, cancel := context.WithTimeout(c.UserContext(), time.Minute)
 	defer cancel()
 
@@ -208,17 +225,15 @@ func (h *Handler) InitiateChat(c *fiber.Ctx) error {
 	if payload.Name != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "dm channels cannot have a name"})
 	}
-	if len(payload.Members)  != 2{
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "dm channels must have 2 participants"})
+	if len(payload.Members)  != 1{
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "can only add 1 participant to your dm"})
 	}
 	case constants.ChannelGroup:
 	if payload.Name == nil || strings.TrimSpace(*payload.Name) == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "group channels require a name"})
 	}
-	if len(payload.Members) == 0 {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "group channels must have more than 1 participant"})
-	}
 }
+	addOrUpdateAdmin(user.Email, &payload)
 
 	chat_metadata, err := h.service.InitiateChat(ctx, payload); 
 	if err != nil {
@@ -229,8 +244,11 @@ func (h *Handler) InitiateChat(c *fiber.Ctx) error {
 }
 
 
-
 func (h *Handler) UpdateLastReadMessage(c *fiber.Ctx) error {
+	user, ok := c.Locals("user").(*models.User)
+    if !ok {
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "user context missing"})
+    }
 	ctx, cancel := context.WithTimeout(c.UserContext(), time.Minute)
 	defer cancel()
 
@@ -239,7 +257,7 @@ func (h *Handler) UpdateLastReadMessage(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	err := h.service.UpdateLastReadMessage(ctx, payload.UserID, payload.ConversationID,
+	err := h.service.UpdateLastReadMessage(ctx, user.ID, payload.ConversationID,
 				payload.MessageID, payload.ReadTime)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
