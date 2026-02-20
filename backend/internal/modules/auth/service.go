@@ -74,7 +74,7 @@ func (s *authService) InviteUser(ctx context.Context, payload *schemas.InviteUse
 	}
 
 	html, err := s.notification.Email.TemplateParser.Parse("invite.html", map[string]interface{}{
-		"inviteUrl": os.Getenv("FRONTEND_URL") + "/invite/" + invitation.Token,
+		"inviteUrl": os.Getenv("FRONTEND_URL") + "/invite?token=" + invitation.Token,
 		"token":     invitation.Token,
 	})
 	if err != nil {
