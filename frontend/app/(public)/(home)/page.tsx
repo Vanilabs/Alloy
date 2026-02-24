@@ -1,6 +1,6 @@
 "use client"
 import { useState } from 'react';
-import { ArrowRight, Play } from 'lucide-react';
+import { ArrowRight, Calendar, ChartNoAxesCombined, Home, Play, User } from 'lucide-react';
 import { toast } from '@/packages/ui/use-toast';
 // import { showAlert } from '@/store/alertSlice';
 // import { useAppDispatch } from '@/packages/store/hooks';
@@ -148,8 +148,10 @@ export default function LandingPage() {
                                         A
                                     </div>
                                     <div className="space-y-4 mt-4">
-                                        {[1, 2, 3, 4, 5].map((i) => (
-                                            <div key={i} className="w-5 h-5 rounded bg-white/10" />
+                                        {[{i:1, icon: Home}, {i:2, icon: ChartNoAxesCombined}, {i:3, icon: User}, {i:4, icon: Play}, {i:5, icon: Calendar}].map((i) => (
+                                            <div key={i.i} className={`flex justify-center align-middle p-1.5 rounded-full text-white ${i.i === 1 ? 'bg-white/10' : 'hover:bg-white/5 cursor-pointer'}`}>
+                                                <i.icon className="w-4 h-5" />
+                                            </div>
                                         ))}
                                     </div>
                                 </div>
@@ -158,7 +160,7 @@ export default function LandingPage() {
                                 <div className="w-64 bg-[#12121A] border-r border-white/5 p-4">
                                     <div className="flex items-center justify-between mb-4">
                                         <span className="text-white/80 text-sm font-medium">Messages</span>
-                                        <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+                                        <div className="w-6 h-6 rounded-full bg-(--primary) flex items-center justify-center">
                                             <span className="text-xs text-white">+</span>
                                         </div>
                                     </div>

@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 
 const PUBLIC_PATHS = ['/login']
 const SYSTEM_PATHS = ['/select-tenant']
@@ -13,6 +14,19 @@ function isSystem(pathname: string) {
 }
 
 export function middleware(req: NextRequest) {
+    const { pathname, searchParams } = req.nextUrl
+
+    // Redirect legacy /invite to new accept page
+    if (pathname === '/auth/invite') {
+        const token = searchParams.get('token') ?? ''
+
+        const url = req.nextUrl.clone()
+        url.pathname = '/invitations/accept'
+        url.search = token ? `?token=${encodeURIComponent(token)}` : ''
+        return NextResponse.redirect(url)
+    }
+
+    return NextResponse.next()
     // const { pathname } = req.nextUrl
 
     // // allow next assets
@@ -45,5 +59,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-    matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+    matcher: ['/((?!_next/static|_next/image|favicon.ico).*)', '/invite'],
 }

@@ -23,14 +23,11 @@ export const registry = {
 
     registerModule: (m: AlloyModule) => {
         state.modules[m.id] = m
-        console.log('registry.registerModule', m)
         m.navigation?.forEach(n => registry.registerNav(n))
         m.permissions?.forEach(p => registry.registerPermission(p))
     },
 
     registerNav: (n: NavigationItem) => {
-        // avoid dup
-        console.log('registry.registerNav', n)
         if (!state.nav.some(x => x.path === n.path)) state.nav.push(n)
     },
 
@@ -50,7 +47,6 @@ export const registry = {
 
     getModules: () => Object.values(state.modules),
     getNav: (): NavigationItem[] => {
-        console.log('registry.getNav', state)
         const nav: NavigationItem[] = []
         for (const m of Object.values(state.modules)) {
             //   if (!registry.isModuleEnabled(m)) continue
@@ -65,7 +61,6 @@ export const registry = {
         )
         if (!mod) return undefined
         // if (!registry.isModuleEnabled(mod)) return undefined
-        console.log('registry.getModuleByPath', path, '->', mod)
         return mod
     },
     // getModuleByPath: (path: string) => {

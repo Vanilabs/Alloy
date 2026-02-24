@@ -20,13 +20,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <html lang="en" className="light">
             <body>
                 <AppProvider>
-                    <SidebarSlotProvider>
+                    {!currentUser?.id ? <>{children}</>: <SidebarSlotProvider>
                         <div className="h-screen flex overflow-hidden">
                             {/* Sidebar - hidden on mobile when chat is open */}
                             {currentUser?.id && <Sidebar currentUser={currentUser} />}
                             {children}
                         </div>
-                    </SidebarSlotProvider>
+                    </SidebarSlotProvider>}
                 </AppProvider>
             </body>
         </html>

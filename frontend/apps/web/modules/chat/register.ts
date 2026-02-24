@@ -29,10 +29,10 @@ export const ChatModule: AlloyModule = {
         { label: 'Chat', path: '/chat', icon: MessageCircle, href: '/chat' },
     ],
     init() {
-        console.log('Chat module initialized')
+        $dlog('Chat', 'Chat module initialized')
     },
     destroy() {
-        console.log('Chat module destroyed')
+        $dlog('chat','Chat module destroyed')
     },
     render(routePath: string): React.ReactNode {
         // For now, we maintain one page per module. Later: nested routes.
