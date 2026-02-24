@@ -27,35 +27,6 @@ export function middleware(req: NextRequest) {
     }
 
     return NextResponse.next()
-    // const { pathname } = req.nextUrl
-
-    // // allow next assets
-    // if (
-    //     pathname.startsWith('/_next') ||
-    //     pathname.startsWith('/favicon.ico') ||
-    //     pathname.startsWith('/public')
-    // ) {
-    //     return NextResponse.next()
-    // }
-
-    // // Admin can have separate auth later; for now allow it to run independently
-    // if (pathname.startsWith(ADMIN_PREFIX)) {
-    //     return NextResponse.next()
-    // }
-
-    // const session = req.cookies.get('alloy_session')?.value
-    // const tenant = req.cookies.get('alloy_tenant')?.value
-
-    // if (!session && !isPublic(pathname)) {
-    //     return NextResponse.redirect(new URL('/login', req.url))
-    // }
-
-    // // logged in but no tenant picked yet → select tenant
-    // if (session && !tenant && !isSystem(pathname) && !isPublic(pathname)) {
-    //     return NextResponse.redirect(new URL('/select-tenant', req.url))
-    // }
-
-    // return NextResponse.next()
 }
 
 export const config = {
