@@ -11,6 +11,7 @@ import { loadPlugins } from './load-plugins'
 import { registry } from '@/packages/plugins'
 import { store } from '@/packages/store'
 import { Features } from '@/packages/store/slices/features.slice'
+import { useAppSelector } from '@/packages/store/hooks'
 
 let runtimeBootstrapped = false // survives strict-mode remount in dev
 
@@ -26,17 +27,16 @@ export const useInitRuntime = () => {
 
         const run = async () => {
             try {
-                console.log('🚀 Bootstrapping Alloy OS runtime...')
-                // const session = await getSession()
+                $log('[BOOT] 🚀 Bootstrapping Alloy OS runtime...');
 
-                const session = await store.dispatch(getSession());
+                const session = await store.getState().auth;
 
-                if (!session) {
-                    if (pathname !== '/login') router.replace('/login')
+                if (!session.isAuthenticated) {
+                    // if (pathname !== '/auth/login') router.replace('/auth/login')
                     return
                 }
 
-                const payload = session.payload as Session;
+                const payload = session.session as Session;
 
                 store.dispatch(setUser(payload?.user))
 
@@ -84,10 +84,10 @@ export const useInitRuntime = () => {
                     router.replace('/')
                 }
 
-                console.log('✅ Alloy OS runtime initialized')
+                $log('[BOOT] ✅ Alloy OS runtime initialized')
             } catch (err) {
                 console.error('Runtime bootstrap failed:', err)
-                router.replace('/login')
+                router.replace('/auth/login')
             }
         }
 

@@ -55,6 +55,7 @@ func JWTMiddleware(env *router.Environment) fiber.Handler {
 				models.ErrInvalidOrExpiredToken.Error(),
 			)
 		}
+		var user *models.User
 
 		// Retrieve userService from the environment
 		userService := env.Services.Get(constants.USERS_MODULE_NAME)
@@ -62,7 +63,7 @@ func JWTMiddleware(env *router.Environment) fiber.Handler {
 			ctx, cancel := context.WithTimeout(c.Context(), 5*time.Second)
 			defer cancel()
 
-			_, err = userService.(users.Service).GetUserByID(ctx, uuid.MustParse(claims.UserID))
+			user, err = userService.(users.Service).GetUserByID(ctx, uuid.MustParse(claims.UserID))
 			if err != nil {
 				if errors.Is(err, sql.ErrNoRows) || err == users.ErrUserNotFound {
 					return utils.SendErrorResponse(
@@ -82,6 +83,7 @@ func JWTMiddleware(env *router.Environment) fiber.Handler {
 		c.Locals("token_id", claims.ID)
 		c.Locals("claims", claims)
 		c.Locals("role", claims.Role)
+		c.Locals("user", user)
 		return c.Next()
 	}
 }

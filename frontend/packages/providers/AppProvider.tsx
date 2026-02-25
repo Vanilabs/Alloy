@@ -4,11 +4,11 @@ import React from 'react'
 import { Provider } from 'react-redux'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { store } from '../store'
+import '@/packages/shared/utils/loggers/globals';
 import { useInitRuntime } from '@/apps/web/bootstrap/init-runtime';
 
 function RuntimeBootstrap() {
     useInitRuntime()
-    console.log('Here')
     return null
 }
 

@@ -16,7 +16,6 @@ type ChatDTO struct {
 }
 
 type UpdateLastReadDTO struct {
-	UserID         uuid.UUID `json:"user_id"`
 	ConversationID uuid.UUID `json:"conversation_id"`
 	MessageID      uuid.UUID `json:"message_id"`
 	ReadTime       time.Time `json:"read_time"`
