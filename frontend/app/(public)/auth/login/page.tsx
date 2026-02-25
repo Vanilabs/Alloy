@@ -2,9 +2,13 @@
 
 import { Button } from '@/packages/ui/components/Button';
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAppDispatch, useAppSelector } from '@/packages/store/hooks';
+import { requestMagicThunk } from '@/packages/store/thunks';
+import { clearAuthTransient, clearError } from '@/packages/store/slices/auth.slice';
+import { useToast } from '@/packages/ui/use-toast';
 // import { loginTenant } from '@/packages/auth/actions'
 interface LoginPageProps {
     onLogin: (email: string, password: string) => Promise<void>;
@@ -12,42 +16,62 @@ interface LoginPageProps {
 
 export default function LoginPage() {
     const router = useRouter()
+    const dispatch = useAppDispatch();
+    // const { toast } = useToast();
+
+    const { loading, error, magicLink } = useAppSelector(s => s.auth)
 
     const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [showPassword, setShowPassword] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [localError, setLocalError] = useState<string | null>(null);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const canSubmit = useMemo(() => {
+        const trimmed = email.trim();
+        return trimmed.length > 3 && trimmed.includes('@')
+    }, [email]);
+
+    async function submit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
-        setError(null);
-        setIsLoading(true);
+        setLocalError(null);
 
-        try {
-            // await onLogin(email, password);
-            await handleLogin();
-        } catch (err) {
-            setError(err instanceof Error ? err.message : "Login failed. Please try again.");
-        } finally {
-            setIsLoading(false);
+        // clear any previous timers
+        if (clearLocalErrorTimerRef.current) {
+            window.clearTimeout(clearLocalErrorTimerRef.current);
+            clearLocalErrorTimerRef.current = null;
         }
-    };
 
-    async function handleLogin() {
-        await loginTenant()
-        router.replace('/')
+        setLocalError(null);
+        dispatch(clearError());
+
+        if (!canSubmit) {
+            setLocalError('Please enter a valid email.')
+            clearLocalErrorTimerRef.current = window.setTimeout(() => {
+                setLocalError(null);
+            }, 3000);
+            return
+        }
+
+        const res = await dispatch(requestMagicThunk({ email: email.trim() }))
+
+        if (requestMagicThunk.fulfilled.match(res)) {
+            // Stay on page and show success state
+            // NOTE: Do not reveal if email exists
+        }
     }
 
+    const clearLocalErrorTimerRef = useRef<number | null>(null);
+
     useEffect(() => {
-        if (!error) return;
+        if (error) dispatch(clearError());
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [email]);
 
-        const timer = setTimeout(() => {
-            setError(null);
-        }, 3000);
-
-        return () => clearTimeout(timer);
-    }, [error]);
+    useEffect(() => {
+        return () => {
+            if (clearLocalErrorTimerRef.current) {
+                window.clearTimeout(clearLocalErrorTimerRef.current);
+            }
+        };
+    }, []);
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-(--background) px-4">
@@ -67,10 +91,18 @@ export default function LoginPage() {
                     </p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    {error && (
+                <form onSubmit={submit} className="space-y-4">
+                    {(localError || error) && (
                         <div className="p-3 rounded-lg bg-(--destructive-foreground)/10 text-(--destructive) text-sm animate-fade-in">
-                            {error}
+                            {localError || error}
+                        </div>
+                    )}
+
+                    {/* Success state (generic, enterprise safe) */}
+                    {magicLink.requested && (
+                        <div className="mb-4 p-3 rounded-lg bg-emerald-50 text-emerald-700 text-sm">
+                            If an account exists for <span className="font-medium">{magicLink.emailMasked}</span>,
+                            you&apos;ll receive a sign-in link shortly.
                         </div>
                     )}
 
@@ -150,9 +182,9 @@ export default function LoginPage() {
                     <Button
                         type="submit"
                         className="w-full py-3 text-base text-(--accent) font-medium bg-(--primary) hover:bg-(--primary-hover) rounded-lg transition-colors"
-                        disabled={isLoading}
+                        disabled={loading || !canSubmit}
                     >
-                        {isLoading ? (
+                        {loading ? (
                             <span className="flex items-center gap-2">
                                 <span className="w-4 h-4 border-2 border-(--primary-foreground)/30 border-t-(--primary-foreground) rounded-full animate-spin" />
                                 Signing in...
@@ -161,6 +193,25 @@ export default function LoginPage() {
                             "Sign in"
                         )}
                     </Button>
+
+                    {/* resend */}
+                    {magicLink.requested && (
+                        <div className="mt-4 text-center text-sm text-(--muted-foreground)">
+                            Didn&apos;t get it?{' '}
+                                <button
+                                type='submit'
+                                className="text-(--primary) hover:underline"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    submit(e as any)
+                                }}
+                                // onClick={submit}
+                                disabled={loading}
+                            >
+                                Resend
+                            </button>
+                        </div>
+                    )}
                 </form>
 
                 <p className="text-center text-sm text-(--muted-foreground) mt-6">
@@ -169,12 +220,11 @@ export default function LoginPage() {
                         Contact your organization admin for an invite.
                     </span>
                 </p>
+
+                <p className="text-center text-sm text-(--muted-foreground) mt-6">
+                    For security, the link expires quickly and can be used only once.
+                </p>
             </div>
         </div>
     )
 }
-
-function loginTenant() {
-    throw new Error('Function not implemented.')
-}
-

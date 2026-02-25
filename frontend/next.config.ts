@@ -1,13 +1,16 @@
 import type { NextConfig } from "next";
-import path from 'path';
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  // webpack(config) {
-  //   config.resolve.alias['@'] = path.resolve(__dirname, 'src')
-  //   return config
-  // },
   reactCompiler: true,
+
+  async rewrites() {
+    return [
+      {
+        source: "/api/:path*",
+        destination: "https://3366-105-112-238-79.ngrok-free.app/api/:path*",
+      },
+    ];
+  },
 };
 
 export default nextConfig;

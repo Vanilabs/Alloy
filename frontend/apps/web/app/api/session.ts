@@ -12,20 +12,20 @@ export const getSession = createAsyncThunk(
             })
             // for demo return sample session
             // Check if in development mode
-            if (process.env.NODE_ENV === 'development')
-                return {
-                    user: {
-                        id: 'user-123',
-                        name: 'Demo User',
-                        email: 'demo@example.com',
-                        status: 'online'
-                    },
-                    tokens: {
-                        accessToken: 'demo-access-token',
-                        refreshToken: 'demo-refresh-token',
-                    },
-                }
-            else
+            // if (process.env.NODE_ENV === 'development')
+            //     return {
+            //         user: {
+            //             id: 'user-123',
+            //             name: 'Demo User',
+            //             email: 'demo@example.com',
+            //             status: 'online'
+            //         },
+            //         tokens: {
+            //             accessToken: 'demo-access-token',
+            //             refreshToken: 'demo-refresh-token',
+            //         },
+            //     }
+            // else
                 if (!res.ok) return null
             return res.json()
         } catch {
@@ -41,20 +41,20 @@ export const getTenants = createAsyncThunk(
             headers: { Authorization: `Bearer ${token}` },
         })
         // for demo return sample tenants
-        if (process.env.NODE_ENV === 'development')
-            return [
-                {
-                    id: 'tenant-1', slug: 'tenant-one', role: 'admin',
-                    subscriptions: ['chat', 'hrm', 'tms'],
-                    permissions: []
-                },
-                {
-                    id: 'tenant-2', slug: 'tenant-two', role: 'member',
-                    subscriptions: ['chat', 'meetings'],
-                    permissions: []
-                },
-            ]
-        else
+        // if (process.env.NODE_ENV === 'development')
+        //     return [
+        //         {
+        //             id: 'tenant-1', slug: 'tenant-one', role: 'admin',
+        //             subscriptions: ['chat', 'hrm', 'tms'],
+        //             permissions: []
+        //         },
+        //         {
+        //             id: 'tenant-2', slug: 'tenant-two', role: 'member',
+        //             subscriptions: ['chat', 'meetings'],
+        //             permissions: []
+        //         },
+        //     ]
+        // else
             return res.ok ? res.json() : []
     }
 )
@@ -66,13 +66,13 @@ export const getTenant = createAsyncThunk(
             cache: 'no-store',
         })
         // for demo return sample tenants
-        if (process.env.NODE_ENV === 'development')
-            return {
-                    id: 'tenant-1', slug: 'tenant-one', role: 'admin',
-                    subscriptions: ['chat', 'hrm', 'tms'],
-                    permissions: []
-                }
-        else
+        // if (process.env.NODE_ENV === 'development')
+        //     return {
+        //             id: 'tenant-1', slug: 'tenant-one', role: 'admin',
+        //             subscriptions: ['chat', 'hrm', 'tms'],
+        //             permissions: []
+        //         }
+        // else
             return res.ok ? res.json() : { id: '', slug: '', role: '', subscriptions: [], permissions: []  }
     }
 )

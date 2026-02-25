@@ -52,8 +52,6 @@ export function Sidebar({
     const { slot, showMobileChat } = useSidebarSlot();
     const [activeNav, setActiveNav] = useState<string>("Home");
 
-    console.log('Sidebar Data:', navData, nav);
-
     // useEffect(() => {
     //     if (pathname) setActiveNav(pathname);
     // }, [pathname]);
@@ -79,7 +77,6 @@ export function Sidebar({
                     {/* Nav */}
                     <nav className="flex-1 flex flex-col items-center gap-2">
                         {[...navItems, ...nav].map(({ icon: Icon, href, label }) => {
-                            // console.log('Current pathname:', pathname, 'Nav href:', href);
                             // const isActive = href === "/"
                             //     ? pathname === "/"
                             //     : pathname.startsWith(href);

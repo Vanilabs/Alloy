@@ -45,3 +45,5 @@ export type PluginContext = {
     registerPermission: (p: Permission) => void
     registerNav: (n: NavigationItem) => void
 }
+
+export type IModuleKey = 'chat' | 'hrm' | 'tms' | 'meetings';

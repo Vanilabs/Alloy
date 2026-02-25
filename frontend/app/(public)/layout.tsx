@@ -1,5 +1,7 @@
 import { Metadata } from 'next'
 import "../../global.css"
+import { Providers } from './provider';
+import { AppProvider } from '@/packages/providers/AppProvider';
 
 export const metadata: Metadata = {
     title: ". : : Alloy App : : .",
@@ -13,7 +15,11 @@ export default function PublicRootLayout({ children }: { children: React.ReactNo
     return (
         <html lang="en" className="light">
             <body>
-                {children}
+                <AppProvider>
+                    <Providers>
+                        {children}
+                    </Providers>
+                </AppProvider>
             </body>
         </html>
     )
