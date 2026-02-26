@@ -4,7 +4,7 @@ ENV=.env
 .PHONY: build run stop clean restart logs
 
 build:
-	docker build -t $(APP_NAME) .
+	docker build --target dev -t $(APP_NAME) .
 
 run:
 	docker run -d --name $(APP_NAME) --env-file $(ENV) -p 3000:3000 $(APP_NAME)
