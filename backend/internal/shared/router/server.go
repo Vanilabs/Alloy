@@ -90,6 +90,14 @@ func InitRouterWithConfig(cfg *config.Config, logger *zap.Logger) *fiber.App {
 		})
 	}
 
+	// Health Check Endpoint
+	app.Get("/health", func(c *fiber.Ctx) error {
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{
+			"status": "healthy",
+			"time":   time.Now().Format(time.RFC3339),
+		})
+	})
+
 	return app
 }
 

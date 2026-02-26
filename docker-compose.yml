@@ -1,4 +1,26 @@
 services:
+
+  alloy-ui:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: dev
+    container_name: alloy-frontend
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    env_file:
+      - ./frontend/.env
+    volumes:
+      - ./frontend:/app
+      - /app/tmp
+    depends_on:
+      alloy-api:
+        condition: service_healthy
+    profiles: ['alloy-ui']
+    networks:
+      - alloy_intranet
+
   alloy-api:
     build:
       context: ./backend
@@ -25,6 +47,12 @@ services:
       migrations:
         condition: service_completed_successfully
     profiles: ['alloy-api']
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://0.0.0.0:8082/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
     networks:
       - alloy_intranet
 
