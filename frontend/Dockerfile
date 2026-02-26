@@ -41,7 +41,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN pnpm build
 
 # --- Stage 4: Production Runner (Production Target) ---
-FROM base AS runner
+FROM base AS prod
 WORKDIR /app
 
 ENV NODE_ENV=production

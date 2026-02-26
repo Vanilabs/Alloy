@@ -1,0 +1,41 @@
+services:
+  nginx:
+    profiles: ['alloy-ui', 'alloy-api'] 
+    ports:
+      - "8080:80" 
+
+  alloy-ui:
+    profiles: ['alloy-ui'] 
+    build:
+      target: dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app           
+      - /app/node_modules        
+      - /app/.next               
+
+  alloy-api:
+    profiles: ['alloy-api']
+    build:
+      target: dev
+    ports:
+      - "8082:8082"              
+    volumes:
+      - ./backend:/app           
+      - /app/tmp                 
+
+  postgres:
+    profiles: ['alloy-api']
+    ports:
+      - "5432:5432"
+
+  redis:
+    profiles: ['alloy-api']
+    ports:
+      - "6379:6379"
+
+  cassandra:
+    profiles: ['alloy-api']
+    ports:
+      - "9042:9042"

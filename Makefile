@@ -1,5 +1,17 @@
-.PHONY: build run start clean migrate-create migrate-up migrate-down migrate-status
+.PHONY: build run start clean migrate-create migrate-up migrate-down migrate-status remote-deploy run-staging-stacks
 
+REMOTE_USER=root
+REMOTE_HOST=89.167.124.194
+REMOTE_DIR=~/alloy
+
+remote-deploy:
+	@echo "🚀 Syncing code to remote server..."
+	rsync -avzP --exclude='.git' --exclude='node_modules' --exclude='.next' --exclude='.gitignore' ./ $(REMOTE_USER)@$(REMOTE_HOST):$(REMOTE_DIR)/
+	
+	@echo "🔄 Rebuilding and restarting containers on remote..."
+	ssh $(REMOTE_USER)@$(REMOTE_HOST) "cd $(REMOTE_DIR) && make run-staging-stacks"
+	
+	@echo "✅ Deployment complete!"
 
 export POSTGRES_DSN ?= $(shell grep POSTGRES_DSN backend/.env 2>/dev/null | cut -d '=' -f2- | tr -d '"')
 export GOOSE_DRIVER ?= postgres
@@ -32,11 +44,11 @@ migrate-status:
 test-backend:
 	cd backend && go test ./tests/...
 
-run-backend-stack-only:
-	docker compose --profile alloy-api up --build
+run-local-backend-only:
+	docker compose -f docker-compose.yml -f docker-compose-dev.yml --profile alloy-api up --build
 
-run-all-stacks:
-	docker compose --profile alloy-api --profile alloy-ui up --build
+run-all-local-stacks:
+	docker compose -f docker-compose.yml -f docker-compose-dev.yml --profile alloy-api --profile alloy-ui up --build
 
 install-be:
 	cd ./backend && go mod download
@@ -44,5 +56,9 @@ install-be:
 install-fe:
 	cd ./frontend && pnpm install
 
-run-frontend-stack-only:
-	docker compose --profile alloy-ui up --build
+run-local-frontend-only:
+	docker compose -f docker-compose.yml -f docker-compose-dev.yml --profile alloy-ui up --build
+
+
+run-staging-stacks:
+	docker compose -f docker-compose.yml -f docker-compose-staging.yml up -d --build
