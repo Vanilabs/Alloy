@@ -1,0 +1,6 @@
+Makefile
+node_modules/
+.env
+README.md
+.next
+next-env.d.ts

@@ -3,26 +3,29 @@ module alloy
 go 1.25.1
 
 require (
+	github.com/biter777/countries v1.7.5
 	github.com/gocql/gocql v1.7.0
 	github.com/gofiber/contrib/websocket v1.3.4
 	github.com/gofiber/fiber/v2 v2.52.10
+	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
 	github.com/mailjet/mailjet-apiv3-go/v4 v4.0.8
 	github.com/pressly/goose/v3 v3.26.0
 	github.com/redis/go-redis/v9 v9.17.2
+	github.com/swaggest/swgui v1.8.5
 	go.uber.org/zap v1.27.1
 	gorm.io/driver/postgres v1.6.0
 	gorm.io/gorm v1.31.1
 )
 
 require (
-	github.com/biter777/countries v1.7.5 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.12 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
-	github.com/golang-jwt/jwt/v5 v5.3.0 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
+	github.com/shurcooL/httpgzip v0.0.0-20190720172056-320755c1c1b0 // indirect
+	golang.org/x/tools/godoc v0.1.0-deprecated // indirect
 )
 
 require (
@@ -34,7 +37,7 @@ require (
 	github.com/datastax/astra-client-go/v2 v2.2.54 // indirect
 	github.com/datastax/cql-proxy v0.1.6 // indirect
 	github.com/datastax/go-cassandra-native-protocol v0.0.0-20220706104457-5e8aad05cf90 // indirect
-	github.com/datastax/gocql-astra v0.0.0-20251218183120-dc69dee20334 // indirect
+	github.com/datastax/gocql-astra v0.0.0-20251218183120-dc69dee20334
 	github.com/deepmap/oapi-codegen v1.12.4 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/fasthttp/websocket v1.5.12 // indirect

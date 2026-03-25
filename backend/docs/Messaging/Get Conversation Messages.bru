@@ -1,0 +1,36 @@
+meta {
+  name: Get Conversation Messages
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{BASE_URL}}/api/chat/messages?limit=10&conversation_id=cccdfcaa-b0bc-47c3-9edd-899c7acdc519
+  body: text
+  auth: bearer
+}
+
+params:query {
+  limit: 10
+  conversation_id: cccdfcaa-b0bc-47c3-9edd-899c7acdc519
+}
+
+headers {
+  Content-Type: text/plain
+  Authorization: Bearer {{AUTH_TOKEN}}
+}
+
+auth:bearer {
+  token: {{AUTH_TOKEN}}
+}
+
+body:text {
+  {
+      "token": "e54c7462488d0f3c8e8e42aa1da9c75c0602ba32ac5ad81880cfb0cb531d37ea"
+  }
+}
+
+settings {
+  encodeUrl: false
+  timeout: 0
+}

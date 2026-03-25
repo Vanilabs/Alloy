@@ -1,0 +1,43 @@
+meta {
+  name: Accept Invitation
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{BASE_URL}}/api/auth/accept
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "kwislawrencekwis@gmail.com",
+    "token": "b2a7060f-b451-498b-991a-c1411515c069"
+  }
+}
+
+script:post-response {
+  bru.test("Status code is 200", function () {
+      expect(res.getStatus()).to.equal(200);
+  });
+  
+  bru.test("Update token collection variable from response", function () {
+      const data = res.getBody();
+      
+      // Check if the property exists
+      expect(data.auth).to.have.property('access_token');
+      
+      // Set the collection-level variable
+      bru.setVar("AUTH_TOKEN", data.auth.access_token);
+  });
+}
+
+settings {
+  encodeUrl: false
+  timeout: 0
+}

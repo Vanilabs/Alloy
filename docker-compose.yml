@@ -1,20 +1,36 @@
 services:
+  nginx:
+    image: nginx:alpine
+    container_name: alloy-proxy
+    restart: unless-stopped
+    depends_on:
+      - alloy-ui
+      - alloy-api
+    networks:
+      - alloy_intranet
+
+  alloy-ui:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: alloy-frontend
+    restart: unless-stopped
+    env_file:
+      - ./frontend/.env
+    depends_on:
+      alloy-api:
+        condition: service_healthy
+    networks:
+      - alloy_intranet
+
   alloy-api:
     build:
       context: ./backend
       dockerfile: Dockerfile
-      target: dev
     container_name: alloy-backend
     restart: unless-stopped
-    ports:
-      - '8082:8082'
     env_file:
       - ./backend/.env
-    volumes:
-      # Mount source code for hot reload with Air
-      - ./backend:/app
-      # Exclude tmp directory from volume mount
-      - /app/tmp
     depends_on:
       redis:
         condition: service_healthy
@@ -24,7 +40,12 @@ services:
         condition: service_healthy
       migrations:
         condition: service_completed_successfully
-    profiles: ['alloy-api']
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://0.0.0.0:8082/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
     networks:
       - alloy_intranet
 
@@ -32,9 +53,6 @@ services:
     image: redis:7-alpine
     container_name: alloy-redis-srv
     restart: unless-stopped
-    profiles: ['alloy-api']
-    ports:
-      - '6379:6379'
     volumes:
       - redis_data:/data
     healthcheck:
@@ -49,24 +67,16 @@ services:
     image: postgres:16-alpine
     container_name: alloy-postgres-db
     restart: unless-stopped
-    profiles: ['alloy-api']
     env_file:
       - ./backend/.env
-    ports:
-      - '5432:5432'
     environment:
-      # These will be used if not in .env file, or override .env values
       - POSTGRES_USER=${POSTGRES_USER:-alloy}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-alloy_secret}
       - POSTGRES_DB=${POSTGRES_DB:-alloydb}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test:
-        [
-          'CMD-SHELL',
-          'pg_isready -U ${POSTGRES_USER:-alloy} -d ${POSTGRES_DB:-alloydb} -h localhost',
-        ]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-alloy} -d $${POSTGRES_DB:-alloydb} -h localhost"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -77,9 +87,6 @@ services:
     image: cassandra:4.1
     container_name: alloy-cassandra-db
     restart: unless-stopped
-    profiles: ['alloy-api']
-    ports:
-      - '9042:9042'
     environment:
       CASSANDRA_CLUSTER_NAME: 'cass_cluster'
     volumes:
@@ -95,14 +102,12 @@ services:
   migrations:
     image: kukymbr/goose-docker:latest
     container_name: alloy-db-migrations
-    profiles: ['alloy-api']
     depends_on:
       postgres:
         condition: service_healthy
     volumes:
       - ./backend/internal/shared/database/migrations:/migrations
     environment:
-      # Set migration directory
       - GOOSE_MIGRATION_DIR=/migrations
       - GOOSE_DRIVER=postgres
       - GOOSE_DBSTRING=postgres://${POSTGRES_USER:-alloy}:${POSTGRES_PASSWORD:-alloy_secret}@postgres:5432/${POSTGRES_DB:-alloydb}?sslmode=disable

@@ -1,0 +1,37 @@
+meta {
+  name: Invite User
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{BASE_URL}}/api/auth/invite
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer {{AUTH_TOKEN}}
+}
+
+auth:bearer {
+  token: {{AUTH_TOKEN}}
+}
+
+body:json {
+  {
+    "first_name": "Law",
+    "last_name": "Kwis",
+    "email": "samuelfadunsin@gmail.com",
+    "role": "admin",
+    "role_at_org": "Backend Engineer",
+    "department": "Engineering",
+    "phone": "+2347046129850"
+  }
+}
+
+settings {
+  encodeUrl: false
+  timeout: 0
+}

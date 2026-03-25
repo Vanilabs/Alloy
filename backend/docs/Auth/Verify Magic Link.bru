@@ -1,0 +1,26 @@
+meta {
+  name: Verify Magic Link
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{BASE_URL}}/api/auth/magic-link/verify
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "token": "c9bbe34f9ab4537e3956298a61fbd328634698ffe9029b2034ee89f68b252ed8"
+  }
+}
+
+settings {
+  encodeUrl: false
+  timeout: 0
+}

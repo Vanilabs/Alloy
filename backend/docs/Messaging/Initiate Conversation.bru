@@ -1,0 +1,34 @@
+meta {
+  name: Initiate Conversation
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{BASE_URL}}/api/chat/create
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxNTMxYzJiMS01ZjU0LTQyM2MtOGM0MC03Y2U3OGNlMzA4Y2EiLCJlbWFpbCI6Impvc2h1YWFqYWdiZTk2QGdtYWlsLmNvbSIsInJvbGUiOiJhZG1pbiIsInRva2VuX3R5cGUiOiJhY2Nlc3MiLCJleHAiOjE3NzIyMDQyODYsImlhdCI6MTc3MTU5OTQ4NiwianRpIjoiOTIwOTI5NDEtM2Q3NC00OTIxLWE3M2EtYWM3YjgzMjc5NTBlIn0.q-inoYLk6pAw4Kn6foklpKhaDbztN3qmZjev_0JGjaU
+}
+
+auth:bearer {
+  token: {{BASE_URL}}
+}
+
+body:json {
+  {
+    "channel_type": "dm",
+  //   "channel_name": "playground",
+    "channel_description": "This is a playground group for testing purposes.",
+    "channel_members" : [{"email" : "samuelfadunsin@gmail.com", "role" : "admin" }]
+  }
+}
+
+settings {
+  encodeUrl: false
+  timeout: 0
+}
