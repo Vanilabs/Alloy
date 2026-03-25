@@ -1,6 +1,7 @@
 package router
 
 import (
+	"alloy/internal/shared/apidocs"
 	"alloy/internal/shared/config"
 	"encoding/json"
 	"fmt"
@@ -12,8 +13,11 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"go.uber.org/zap"
+
+	swgui "github.com/swaggest/swgui/v5"
 )
 
 func InitRouterWithConfig(cfg *config.Config, logger *zap.Logger) *fiber.App {
@@ -97,6 +101,18 @@ func InitRouterWithConfig(cfg *config.Config, logger *zap.Logger) *fiber.App {
 			"time":   time.Now().Format(time.RFC3339),
 		})
 	})
+
+	app.Get("/openapi.yaml", func(c *fiber.Ctx) error {
+		if len(apidocs.Spec) == 0 {
+			return c.Status(fiber.StatusServiceUnavailable).SendString("OpenAPI spec is not available")
+		}
+
+		c.Set("Content-Type", "application/x-yaml")
+		return c.Send(apidocs.Spec)
+	})
+
+	swaggerHandler := swgui.NewHandler("Zyncore AI API", "/openapi.yaml", "/docs")
+	app.Get("/docs*", adaptor.HTTPHandler(swaggerHandler))
 
 	return app
 }

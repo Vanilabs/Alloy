@@ -27,9 +27,6 @@ func NewHandler(service Service) *Handler {
 	return &Handler{service: service}
 }
 
-
-
-
 func (h *Handler) Init(basePath string, env *router.Environment) error {
 	h.logger = env.Logger
 	h.env = env
@@ -46,7 +43,6 @@ func (h *Handler) Init(basePath string, env *router.Environment) error {
 
 	return nil
 }
-
 func (h *Handler) inviteUser(c *fiber.Ctx) error {
 	ctx, cancel := context.WithTimeout(c.UserContext(), time.Minute)
 	defer cancel()
@@ -73,7 +69,6 @@ func (h *Handler) inviteUser(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"message": "user invited successfully"})
 }
-
 func (h *Handler) acceptInvitation(c *fiber.Ctx) error {
 	ctx, cancel := context.WithTimeout(c.UserContext(), time.Minute)
 	defer cancel()
@@ -102,7 +97,6 @@ func (h *Handler) acceptInvitation(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(response)
 }
-
 func (h *Handler) requestMagicLink(c *fiber.Ctx) error {
 	ctx, cancel := context.WithTimeout(c.UserContext(), time.Minute)
 	defer cancel()
@@ -119,7 +113,6 @@ func (h *Handler) requestMagicLink(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "magic link sent successfully"})
 }
-
 func (h *Handler) verifyMagicLink(c *fiber.Ctx) error {
 	ctx, cancel := context.WithTimeout(c.UserContext(), time.Minute)
 	defer cancel()

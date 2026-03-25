@@ -5,14 +5,13 @@ meta {
 }
 
 post {
-  url: http://127.0.0.1:8082/api/auth/magic-link/verify
+  url: {{BASE_URL}}/api/auth/magic-link/verify
   body: json
   auth: inherit
 }
 
 headers {
   Content-Type: application/json
-  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxNTMxYzJiMS01ZjU0LTQyM2MtOGM0MC03Y2U3OGNlMzA4Y2EiLCJlbWFpbCI6Impvc2h1YWFqYWdiZTk2QGdtYWlsLmNvbSIsInJvbGUiOiJhZG1pbiIsInRva2VuX3R5cGUiOiJhY2Nlc3MiLCJleHAiOjE3NzIyMDQyODYsImlhdCI6MTc3MTU5OTQ4NiwianRpIjoiOTIwOTI5NDEtM2Q3NC00OTIxLWE3M2EtYWM3YjgzMjc5NTBlIn0.q-inoYLk6pAw4Kn6foklpKhaDbztN3qmZjev_0JGjaU
 }
 
 body:json {
@@ -23,4 +22,5 @@ body:json {
 
 settings {
   encodeUrl: false
+  timeout: 0
 }

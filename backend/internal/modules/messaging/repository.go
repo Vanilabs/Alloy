@@ -19,18 +19,40 @@ import (
 
 
 
+type ConversationWithChannel struct {
+	ConversationID uuid.UUID
+	ChannelID      uuid.UUID
+	ChannelType    string
+	ChannelName    *string
+	CreatedAt      time.Time
+}
+
+type MemberWithUser struct {
+	ChannelID uuid.UUID
+	UserID    uuid.UUID
+	Role      string
+	FirstName string
+	LastName  string
+	Email     string
+}
+
 type Repository interface {
 	Save(msg *models.Message) error
 	ListByConversation(conversationID string, limit int) ([]models.Message, error)
 	CreateConversation(ctx context.Context, convo *models.Conversation)(uuid.UUID, error)
 	CreateChannel(ctx context.Context, channel *models.Channel) (uuid.UUID, error)
-	GetChannelByID(ctx context.Context, id uuid.UUID) (*models.Channel, error) 
-	GetConversationByID(ctx context.Context, id uuid.UUID) (*models.Conversation, error) 
+	GetChannelByID(ctx context.Context, id uuid.UUID) (*models.Channel, error)
+	GetConversationByID(ctx context.Context, id uuid.UUID) (*models.Conversation, error)
 	AddMembersToChannel(ctx context.Context, members []models.ChannelMember,) error
 	GetChannelMembers(ctx context.Context, channel_id uuid.UUID) ([]models.ChannelMember, error)
 	GetUserConversations(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error)
 	FetchAllOfflineMessagesForUser(ctx context.Context,userID uuid.UUID, limit int,concurrency int,) ([]models.Message, error)
 	UpdateLastRead(ctx context.Context, convo_read *models.ConversationRead,) error
+	GetConversationReads(ctx context.Context, userID uuid.UUID, conversationIDs []uuid.UUID) (map[uuid.UUID]time.Time, error)
+	GetConversationsWithChannels(ctx context.Context, userID uuid.UUID) ([]ConversationWithChannel, error)
+	GetChannelMembersWithUsers(ctx context.Context, channelIDs []uuid.UUID) ([]MemberWithUser, error)
+	GetLastMessageInConversation(ctx context.Context, conversationID uuid.UUID) (*models.Message, error)
+	CountMessagesAfter(ctx context.Context, conversationID uuid.UUID, after time.Time) (int, error)
 }
 
 
@@ -208,7 +230,7 @@ func (r *messageRepository) UpdateLastRead(ctx context.Context, convo_read *mode
 }
 
 
-func (r *messageRepository) getConversationReads(
+func (r *messageRepository) GetConversationReads(
 	ctx context.Context,
 	userID uuid.UUID,
 	conversationIDs []uuid.UUID,
@@ -229,6 +251,68 @@ func (r *messageRepository) getConversationReads(
 	return readMap, nil
 }
 
+func (r *messageRepository) GetConversationsWithChannels(ctx context.Context, userID uuid.UUID) ([]ConversationWithChannel, error) {
+	var results []ConversationWithChannel
+	err := r.db.WithContext(ctx).
+		Table("conversations").
+		Select("conversations.id as conversation_id, channels.id as channel_id, channels.type as channel_type, channels.name as channel_name, conversations.created_at").
+		Joins("JOIN channels ON channels.id = conversations.channel_id").
+		Joins("JOIN channel_members ON channel_members.channel_id = conversations.channel_id").
+		Where("channel_members.user_id = ?", userID).
+		Scan(&results).Error
+	return results, err
+}
+
+func (r *messageRepository) GetChannelMembersWithUsers(ctx context.Context, channelIDs []uuid.UUID) ([]MemberWithUser, error) {
+	if len(channelIDs) == 0 {
+		return nil, nil
+	}
+	var results []MemberWithUser
+	err := r.db.WithContext(ctx).
+		Table("channel_members").
+		Select("channel_members.channel_id, users.id as user_id, users.first_name, users.last_name, users.email, channel_members.role").
+		Joins("JOIN users ON users.id = channel_members.user_id").
+		Where("channel_members.channel_id IN ?", channelIDs).
+		Scan(&results).Error
+	return results, err
+}
+
+func (r *messageRepository) GetLastMessageInConversation(ctx context.Context, conversationID uuid.UUID) (*models.Message, error) {
+	iter := r.session.Query(`
+		SELECT id, conversation_id, sender_id, text, timestamp
+		FROM messages
+		WHERE conversation_id = ?
+		ORDER BY timestamp DESC
+		LIMIT 1`,
+		ToGocqlUUID(conversationID),
+	).WithContext(ctx).Iter()
+
+	var msg models.Message
+	found := iter.Scan(&msg.ID, &msg.ConversationID, &msg.SenderID, &msg.Text, &msg.Timestamp)
+	if err := iter.Close(); err != nil {
+		return nil, err
+	}
+	if !found {
+		return nil, nil
+	}
+	return &msg, nil
+}
+
+func (r *messageRepository) CountMessagesAfter(ctx context.Context, conversationID uuid.UUID, after time.Time) (int, error) {
+	var count int
+	err := r.session.Query(`
+		SELECT COUNT(*) FROM messages
+		WHERE conversation_id = ?
+		AND timestamp > ?`,
+		ToGocqlUUID(conversationID),
+		after,
+	).WithContext(ctx).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
 
 
 func (r *messageRepository) FetchAllOfflineMessagesForUser(
@@ -244,7 +328,7 @@ func (r *messageRepository) FetchAllOfflineMessagesForUser(
 	}
 
 
-	readMap, err := r.getConversationReads(ctx, userID, conversationIDs)
+	readMap, err := r.GetConversationReads(ctx, userID, conversationIDs)
 	if err != nil {
 		return nil, err
 	}

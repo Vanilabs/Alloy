@@ -71,6 +71,7 @@ func (h *Handler) Init(basePath string, env *router.Environment) error {
 
 	chatGroup.Get("/send_message", websocket.New(h.handleActiveChat))
 	chatGroup.Get("/messages", h.getConversationMessages)
+	chatGroup.Get("/conversations", h.getActiveConversations)
 	chatGroup.Post("/create", h.InitiateChat)
 	chatGroup.Post("/messages/last_read", h.UpdateLastReadMessage)
 
@@ -243,6 +244,23 @@ func (h *Handler) InitiateChat(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(chat_metadata)
 }
 
+
+func (h *Handler) getActiveConversations(c *fiber.Ctx) error {
+	user, ok := c.Locals("user").(*models.User)
+	if !ok {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "user context missing"})
+	}
+	ctx, cancel := context.WithTimeout(c.UserContext(), time.Minute)
+	defer cancel()
+
+	conversations, err := h.service.GetActiveConversations(ctx, user.ID)
+	if err != nil {
+		h.env.Logger.Error("Failed to fetch active conversations", zap.Error(err))
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to fetch conversations"})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(conversations)
+}
 
 func (h *Handler) UpdateLastReadMessage(c *fiber.Ctx) error {
 	user, ok := c.Locals("user").(*models.User)

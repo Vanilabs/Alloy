@@ -1,0 +1,2 @@
+{"level":"INFO","time":"2026-03-16T14:39:36.549+0100","caller":"runtime/proc.go:285","msg":"Welcome to Alloy Backend"}
+{"level":"ERROR","time":"2026-03-16T14:39:38.692+0100","caller":"runtime/proc.go:285","msg":"Failed to connect to Redis","error":"failed to connect to redis: dial tcp [::1]:6379: connect: connection refused"}
