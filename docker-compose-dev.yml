@@ -1,8 +1,8 @@
 services:
   nginx:
-    profiles: ['alloy-ui', 'alloy-api'] 
+    profiles: ['proxy']
     ports:
-      - "8080:80" 
+      - "8080:80"
 
   alloy-ui:
     profiles: ['alloy-ui'] 

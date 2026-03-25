@@ -8,6 +8,7 @@
 */docs
 !backend/docs/
 !backend/docs/**
+backend/docs/environments
 */DS_Store
 */buildlog/
 **/doc/api/
@@ -24,3 +25,5 @@
 /backend/.env.docker
 /backend/.env.staging
 .envrc
+.vscode
+.gocache
