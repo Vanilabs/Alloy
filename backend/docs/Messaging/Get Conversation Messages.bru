@@ -1,0 +1,35 @@
+meta {
+  name: Get Conversation Messages
+  type: http
+  seq: 3
+}
+
+get {
+  url: http://127.0.0.1:8082/api/chat/messages?limit=10&conversation_id=cccdfcaa-b0bc-47c3-9edd-899c7acdc519
+  body: text
+  auth: bearer
+}
+
+params:query {
+  limit: 10
+  conversation_id: cccdfcaa-b0bc-47c3-9edd-899c7acdc519
+}
+
+headers {
+  Content-Type: text/plain
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxNTMxYzJiMS01ZjU0LTQyM2MtOGM0MC03Y2U3OGNlMzA4Y2EiLCJlbWFpbCI6Impvc2h1YWFqYWdiZTk2QGdtYWlsLmNvbSIsInJvbGUiOiJhZG1pbiIsInRva2VuX3R5cGUiOiJhY2Nlc3MiLCJleHAiOjE3NzIyMDQyODYsImlhdCI6MTc3MTU5OTQ4NiwianRpIjoiOTIwOTI5NDEtM2Q3NC00OTIxLWE3M2EtYWM3YjgzMjc5NTBlIn0.q-inoYLk6pAw4Kn6foklpKhaDbztN3qmZjev_0JGjaU
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxNTMxYzJiMS01ZjU0LTQyM2MtOGM0MC03Y2U3OGNlMzA4Y2EiLCJlbWFpbCI6Impvc2h1YWFqYWdiZTk2QGdtYWlsLmNvbSIsInJvbGUiOiJhZG1pbiIsInRva2VuX3R5cGUiOiJhY2Nlc3MiLCJleHAiOjE3NzUwNDE3MjMsImlhdCI6MTc3NDQzNjkyMywianRpIjoiNWE3M2VkNTUtMzI2Mi00ODM5LWJlNWMtYzJiNmI2NjYyYjQyIn0.RQBDjVHsi0E3DB2RmqoXitag8oFr61fou-UwxlE8OZo
+}
+
+body:text {
+  {
+      "token": "e54c7462488d0f3c8e8e42aa1da9c75c0602ba32ac5ad81880cfb0cb531d37ea"
+  }
+}
+
+settings {
+  encodeUrl: false
+}

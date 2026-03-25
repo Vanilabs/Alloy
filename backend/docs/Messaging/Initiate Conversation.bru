@@ -1,0 +1,33 @@
+meta {
+  name: Initiate Conversation
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://127.0.0.1:8082/api/chat/create
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxNTMxYzJiMS01ZjU0LTQyM2MtOGM0MC03Y2U3OGNlMzA4Y2EiLCJlbWFpbCI6Impvc2h1YWFqYWdiZTk2QGdtYWlsLmNvbSIsInJvbGUiOiJhZG1pbiIsInRva2VuX3R5cGUiOiJhY2Nlc3MiLCJleHAiOjE3NzIyMDQyODYsImlhdCI6MTc3MTU5OTQ4NiwianRpIjoiOTIwOTI5NDEtM2Q3NC00OTIxLWE3M2EtYWM3YjgzMjc5NTBlIn0.q-inoYLk6pAw4Kn6foklpKhaDbztN3qmZjev_0JGjaU
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxNTMxYzJiMS01ZjU0LTQyM2MtOGM0MC03Y2U3OGNlMzA4Y2EiLCJlbWFpbCI6Impvc2h1YWFqYWdiZTk2QGdtYWlsLmNvbSIsInJvbGUiOiJhZG1pbiIsInRva2VuX3R5cGUiOiJhY2Nlc3MiLCJleHAiOjE3NzUwNDE3MjMsImlhdCI6MTc3NDQzNjkyMywianRpIjoiNWE3M2VkNTUtMzI2Mi00ODM5LWJlNWMtYzJiNmI2NjYyYjQyIn0.RQBDjVHsi0E3DB2RmqoXitag8oFr61fou-UwxlE8OZo
+}
+
+body:json {
+  {
+    "channel_type": "dm",
+  //   "channel_name": "playground",
+    "channel_description": "This is a playground group for testing purposes.",
+    "channel_members" : [{"email" : "samuelfadunsin@gmail.com", "role" : "admin" }]
+  }
+}
+
+settings {
+  encodeUrl: false
+}

@@ -1,0 +1,27 @@
+meta {
+  name: Accept Invitation
+  type: http
+  seq: 4
+}
+
+patch {
+  url: http://127.0.0.1:8082/api/auth/accept
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxNTMxYzJiMS01ZjU0LTQyM2MtOGM0MC03Y2U3OGNlMzA4Y2EiLCJlbWFpbCI6Impvc2h1YWFqYWdiZTk2QGdtYWlsLmNvbSIsInJvbGUiOiJhZG1pbiIsInRva2VuX3R5cGUiOiJhY2Nlc3MiLCJleHAiOjE3NzIyMDQyODYsImlhdCI6MTc3MTU5OTQ4NiwianRpIjoiOTIwOTI5NDEtM2Q3NC00OTIxLWE3M2EtYWM3YjgzMjc5NTBlIn0.q-inoYLk6pAw4Kn6foklpKhaDbztN3qmZjev_0JGjaU
+}
+
+body:json {
+  {
+    "email": "kwislawrencekwis@gmail.com",
+    "token": "b2a7060f-b451-498b-991a-c1411515c069"
+  }
+}
+
+settings {
+  encodeUrl: false
+}

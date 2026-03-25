@@ -6,6 +6,8 @@
 */dist
 */build
 */docs
+!backend/docs/
+!backend/docs/**
 */DS_Store
 */buildlog/
 **/doc/api/

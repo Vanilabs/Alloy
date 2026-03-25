@@ -1,0 +1,19 @@
+meta {
+  name: List Active Conversations
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://127.0.0.1:8082/api/chat/conversations
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxNTMxYzJiMS01ZjU0LTQyM2MtOGM0MC03Y2U3OGNlMzA4Y2EiLCJlbWFpbCI6Impvc2h1YWFqYWdiZTk2QGdtYWlsLmNvbSIsInJvbGUiOiJhZG1pbiIsInRva2VuX3R5cGUiOiJhY2Nlc3MiLCJleHAiOjE3NzUwNDE3MjMsImlhdCI6MTc3NDQzNjkyMywianRpIjoiNWE3M2VkNTUtMzI2Mi00ODM5LWJlNWMtYzJiNmI2NjYyYjQyIn0.RQBDjVHsi0E3DB2RmqoXitag8oFr61fou-UwxlE8OZo
+}
+
+settings {
+  encodeUrl: true
+}
